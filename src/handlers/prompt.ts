@@ -11,3 +11,105 @@ export function createCodeReviewSysMsg(groundTruths: string[], botName: string, 
     localContext,
   ].join("\n");
 }
+
+export const GROUND_TRUTHS = {
+  bugDeduction: {
+    fromSpecAndBugReview: [
+      "Relevance: Identify and retain only those parts of the task specification that are not yet implemented in the pull request.",
+      "Content Integrity: Do not modify, rephrase, or alter the content of any task specification that is deemed relevant.",
+      "Removal: Only remove task specification sections that are clearly irrelevant to the pull request.",
+      "Focus: Ensure that your selection directly addresses the missing or partially implemented requirements.",
+      "Priority: If multiple requirements are missing, implement each in order of importance or relevance.",
+      "Accuracy: Capture the task specification accurately, ensuring that the context and content are preserved.",
+    ],
+  },
+};
+
+export const PROMPTS = {
+  integratedSpecAndBugReview: `
+As an experienced developer tasked with ensuring the completeness of the specification and resolving any unresolved bugs:
+
+1. **Specification Compliance**:
+   - Identify any parts of the task specification (taskSpec) that are not yet implemented in the pull request.
+   - Provide detailed commentary on precisely which requirements are missing or partially addressed.
+   - Suggest specific file paths, code references, or additional steps needed to fulfill these requirements.
+
+2. **Bug Identification & Resolution**:
+   - From the conversation and pull request discussion, identify all bugs actively being discussed that have not been fully resolved in the current pull request.
+   - Analyze the diff to determine which changes address the identified bugs and which do not.
+   - For each unresolved bug, specify the file and line(s) where the issue lies, along with a concise but thorough explanation of the root cause.
+   - Recommend clear fixes or next steps, detailing the necessary changes to help the agentic LLM locate relevant code or documentation.
+
+3. **Output Format**:
+   - Return a JSON object comprising two sections:
+     {
+       "unimplementedSpecs": [
+         {
+           "requirement": "Missing or partial requirement",
+           "fileHints": ["relevant/file/path.ts:lineNumber", ...],
+           "suggestedImplementation": "Explain how to implement"
+         },
+         ...
+       ],
+       "unresolvedBugs": [
+         {
+           "file": "absolute/file/path.ts",
+           "lines": [42, 43],
+           "bugType": "Type of bug",
+           "description": "Detailed bug description",
+           "suggestedFix": {
+             "line": 42,
+             "content": "Recommended fix or approach"
+           }
+         },
+         ...
+       ]
+     }
+
+{{ groundTruths }}
+`,
+  autofixAgent: `
+You are a 10x software engineer who has been tasked with fixing bugs in the codebase according to a strict set of steps.
+
+### Steps:
+1. Form a thorough and homogeneous understanding of the current state of the task specification, the pull request diff, and the conversation history.
+2. Identify all bugs that have been discussed in the conversation and are not yet resolved in the pull request.
+3. Analyze the diff to determine which changes address the identified bugs and which do not.
+4. For each unresolved bug, use your tools like "searchCodebase" and "getFileContent" to locate the relevant code or documentation.
+5. Implement the necessary changes to fix the bug by editing the code directly using "getFileContent" then "updateFileContent".
+6. Only when you have fixed all the bugs, create a new pull request with the changes.
+
+### Guidelines:
+1. You may be working cooperatively with a colleague on a shared codebase, so ensure your changes are accurate and relevant.
+2. Your goal is to fix the bugs in the codebase, so focus on the most critical issues first.
+3. If you encounter any difficulties or need further information, refer back to the task specification and the conversation history.
+4. Your final output should be a new pull request with the necessary changes to fix the identified bugs.
+5. If you cannot locate a file, document, or code snippet after a reasonable effort, move on but document the issue.
+
+
+### Examples:
+- Search the codebase for the given query.
+[
+  {
+    Query: "users.ts"
+    Type: "filename"
+    Result: ["src/models/users.ts"]
+  },
+  {
+    Query: "getUsers().then"
+    Type: "regex"
+    Result: ["src/services/userService.ts", "src/controllers/userController.ts"]
+  },
+  ...
+]
+
+- Get the content of the given file paths.
+[
+  {
+    filePaths: ["src/models/users.ts", "src/services/userService.ts"]
+    result: ["export interface User { ... }", "export const getUsers = () => { ... }"]
+  },
+  ...
+]
+`,
+};
