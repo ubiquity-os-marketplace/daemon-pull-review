@@ -13,13 +13,16 @@ With its huge context window, we are able to feed the entire issue specification
 ## Technical Architecture
 
 ### Core System Design
+
 - **Cloudflare Worker-based Service**: Implements a serverless architecture running on Cloudflare's edge network
 - **GitHub App Integration**: Processes webhooks and interacts with GitHub's API for pull request management
 - **OpenRouter Integration**: Provides access to LLMs through OpenRouter's API
 - **TypeScript Implementation**: Ensures type safety and better code maintainability
 
 ### Key Components
+
 1. **Pull Request Processing Pipeline**
+
    - Webhook event handling for pull request activities
    - Diff parsing and analysis system
    - Context gathering from repository files
@@ -27,12 +30,14 @@ With its huge context window, we are able to feed the entire issue specification
    - Review generation and posting
 
 2. **Context Management**
+
    - Efficient handling of large context windows (up to 200k tokens)
    - Smart chunking of pull request content
    - Issue specification integration
    - Repository configuration parsing
 
 3. **LLM Integration Layer**
+
    - Configurable model selection through OpenRouter
    - Token limit management
    - Response streaming capabilities
@@ -77,6 +82,7 @@ bun run test
 ```
 
 The test suite includes:
+
 - Unit tests for core functionality
 - Integration tests for GitHub webhook processing
 - Mock handlers for API interactions

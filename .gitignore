@@ -16,3 +16,6 @@ cypress/screenshots
 script.ts
 .wrangler
 test-dashboard.md
+test-script.ts
+repo-clone
+*bugReport.json
