@@ -1,4 +1,5 @@
 import { createCodeReviewSysMsg, llmQuery } from "../../../handlers/prompt";
+import { processLlmResponse } from "../../../helpers/process-llm-response";
 import { Context } from "../../../types";
 import { SuperOpenRouter } from "./open-router";
 import OpenAI from "openai";
@@ -9,6 +10,7 @@ export interface CompletionsType {
 }
 
 export class OpenRouterCompletion extends SuperOpenRouter {
+  public _client = this.client;
   constructor(client: OpenAI, context: Context) {
     super(client, context);
   }
@@ -31,7 +33,6 @@ export class OpenRouterCompletion extends SuperOpenRouter {
 
   async createCompletion(model: string, localContext: string, groundTruths: string[], botName: string, maxTokens: number): Promise<CompletionsType> {
     const sysMsg = createCodeReviewSysMsg(groundTruths, botName, localContext);
-
     this.context.logger.debug(`System message: ${sysMsg}`);
 
     const res = (await this.client.chat.completions.create({
@@ -53,28 +54,7 @@ export class OpenRouterCompletion extends SuperOpenRouter {
       error: { message: string; code: number; metadata: object } | undefined;
     };
 
-    if (!res.choices || res.choices.length === 0) {
-      throw this.context.logger.error(`Unexpected no response from LLM, Reason: ${res.error ? res.error.message : "No reason specified"}`);
-    }
-
-    const answer = res.choices[0].message.content;
-    if (!answer) {
-      throw this.context.logger.error("Unexpected response format: Expected text block");
-    }
-
-    const inputTokens = res.usage?.prompt_tokens;
-    const outputTokens = res.usage?.completion_tokens;
-
-    if (inputTokens && outputTokens) {
-      this.context.logger.info(`Number of tokens used: ${inputTokens + outputTokens}`);
-    } else {
-      this.context.logger.info(`LLM did not output usage statistics`);
-    }
-
-    return {
-      answer,
-      groundTruths,
-    };
+    return await processLlmResponse(this.context.logger, groundTruths, res);
   }
 
   async createGroundTruthCompletion(context: Context, groundTruthSource: string, systemMsg: string): Promise<string | null> {
