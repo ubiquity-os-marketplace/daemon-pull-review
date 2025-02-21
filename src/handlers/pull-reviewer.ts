@@ -211,24 +211,10 @@ export class PullReviewer {
       },
     } = this.context;
 
-    const taskNumbers = await this.getTaskNumberFromPullRequest(this.context);
-    if (!taskNumbers) return null;
-
-    const issues = (await Promise.all(
-      taskNumbers.map(async (taskNumber) => {
-        return await fetchIssue(this.context, taskNumber);
-      })
-    )) as Issue[];
-
-    if (issues.some((issue) => !issue) || !issues) {
-      throw this.context.logger.error(`Error fetching issue, Aborting`, {
-        owner: this.context.payload.repository.owner.login,
-        repo: this.context.payload.repository.name,
-        issue_number: taskNumbers,
-      });
-    }
-
     const taskSpecifications: string[] = [];
+    const issues = await this.getTasksFromPullRequest(this.context);
+    if (!issues) return null;
+
     issues.forEach((issue) => {
       if (!issue?.body) {
         throw this.context.logger.error(`Task #${issue?.number} does not contain a specification and this cannot be automatically reviewed`);
@@ -313,7 +299,7 @@ export class PullReviewer {
       };
     }
   }
-  async getTaskNumberFromPullRequest(context: Context) {
+  async getTasksFromPullRequest(context: Context) {
     const {
       payload: { pull_request },
     } = context;
@@ -333,7 +319,24 @@ export class PullReviewer {
       throw this.context.logger.error("Task number not found", { pull_request });
     }
 
-    return closingIssues.map((issue) => issue.number);
+    const issues = (await Promise.all(
+      closingIssues.map(async (issue) => {
+        const issueNumber = issue.number;
+        const issueRepo = issue.repository.name;
+        const issueOwner = issue.repository.owner;
+        return await fetchIssue(this.context, issueNumber, issueOwner, issueRepo);
+      })
+    )) as Issue[];
+
+    if (issues.some((issue) => !issue) || !issues) {
+      throw this.context.logger.error(`Error fetching issue, Aborting`, {
+        owner: this.context.payload.repository.owner.login,
+        repo: this.context.payload.repository.name,
+        issues: issues.map((issue) => issue.url),
+      });
+    }
+
+    return issues;
   }
 
   validateReviewOutput(reviewString: string) {
