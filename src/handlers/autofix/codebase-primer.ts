@@ -40,6 +40,7 @@ export class CodebasePrimer {
     this.logger.info("Authenticating as bot...");
     const loggedInStatus = execSync("gh auth status", { stdio: "pipe" }).toString();
     this.logger.info(loggedInStatus);
+    execSync("git config --global credential.helper 'gh auth git-credential'", { stdio: "pipe" });
   }
 
   /**
