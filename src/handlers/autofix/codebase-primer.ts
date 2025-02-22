@@ -42,6 +42,7 @@ export class CodebasePrimer {
 
     execSync(`git config --global user.email "${this.context.env.UBIQUITY_OS_APP_NAME}[bot]@users.noreply.github.com"`);
     execSync(`git config --global user.name "${this.context.env.UBIQUITY_OS_APP_NAME}[bot]"`);
+    execSync(`git remote set-url origin https://${this.context.env.GH_TOKEN}@github.com/${this.repoUrl.replace('https://github.com/', '')}`);
   }
 
   /**

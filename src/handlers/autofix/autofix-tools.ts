@@ -406,13 +406,11 @@ export const TOOL_METHODS = {
       }
 
       const remoteUrl = agent?.forkedRepoUrl || context.payload.repository.clone_url;
+
       try {
-        await execSyncDispatch(`git remote get-url origin`, { cwd: baseDir });
-      } catch {
-        if (!remoteUrl) {
-          throw new Error("Remote origin not configured. Provide remoteUrl to set one.");
-        }
         await execSyncDispatch(`git remote add origin ${remoteUrl}`, { cwd: baseDir });
+      } catch {
+        await execSyncDispatch(`git remote set-url origin ${remoteUrl}`, { cwd: baseDir });
       }
 
       try {
