@@ -54,6 +54,7 @@ runs:
 
     - name: Run compute reviews
       id: main
+      shell: bash
       run: |
         node dist/index.js
       env:
