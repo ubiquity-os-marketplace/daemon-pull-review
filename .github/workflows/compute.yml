@@ -44,4 +44,4 @@ jobs:
       - name: Run compute reviews
         uses: ./
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ inputs.authToken }}

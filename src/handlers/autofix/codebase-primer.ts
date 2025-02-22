@@ -48,7 +48,8 @@ export class CodebasePrimer {
   private async _cloneRepo(repoUrl: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       this.logger.info("Cloning repository...");
-      execSync(`git -c credential.helper='!gh auth git-credential' clone --branch ${this.branch} ${repoUrl} "../repo-clone"`, { stdio: "inherit" }); resolve();
+      execSync(`git clone --branch ${this.branch} ${repoUrl} "../repo-clone"`, { stdio: "inherit" });
+      resolve();
     });
   }
 
