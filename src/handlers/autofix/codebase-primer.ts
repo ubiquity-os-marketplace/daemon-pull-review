@@ -40,20 +40,6 @@ export class CodebasePrimer {
     this.logger.info("Authenticating as bot...");
     const loggedInStatus = execSync("gh auth status", { stdio: "pipe" }).toString();
     this.logger.info(loggedInStatus);
-
-    execSync(`git config --global user.email "${this.context.env.UBIQUITY_OS_APP_NAME}[bot]@users.noreply.github.com"`);
-    execSync(`git config --global user.name "${this.context.env.UBIQUITY_OS_APP_NAME}[bot]"`);
-
-    const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
-    if (!token) {
-      this.logger.error("GitHub token not found. Please set GH_TOKEN or GITHUB_TOKEN in your environment variables.");
-      return;
-    }
-    execSync(`git config --global credential.helper 'store --file ~/.git-credentials'`);
-    fs.writeFileSync(
-      path.join(process.env.HOME || process.env.USERPROFILE || "", '.git-credentials'),
-      `https://${token}:x-oauth-basic@github.com\n`
-    );
   }
 
   /**
