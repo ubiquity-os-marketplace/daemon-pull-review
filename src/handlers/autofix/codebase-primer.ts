@@ -1,7 +1,7 @@
 import { exec, execSync } from "child_process";
 import * as fs from "fs";
-import * as path from "path";
 import { Context } from "../../types";
+import * as path from "path";
 
 export class CodebasePrimer {
   logger: Context["logger"];
@@ -40,6 +40,10 @@ export class CodebasePrimer {
     this.logger.info("Authenticating as bot...");
     const loggedInStatus = execSync("gh auth status", { stdio: "pipe" }).toString();
     this.logger.info(loggedInStatus);
+    const baseDir = path.resolve(process.cwd(), "../repo-clone");
+    exec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`, { cwd: baseDir });
+    exec(`git config --global user.name "github-actions[bot]"`, { cwd: baseDir });
+    exec(`git config --global credential.helper store`, { cwd: baseDir });
   }
 
   /**
