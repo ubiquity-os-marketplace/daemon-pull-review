@@ -423,7 +423,7 @@ export const TOOL_METHODS = {
       await execSyncDispatch(`git pull origin ${branch}`, { cwd: baseDir });
       await execSyncDispatch(`git add .`, { cwd: baseDir });
       await execSyncDispatch(`git commit -m "${message}"`, { cwd: baseDir });
-      await execSyncDispatch(`git push origin ${branch}`, { cwd: baseDir });
+      await execSyncDispatch(`gh repo sync --branch ${branch}`, { cwd: baseDir });
     } catch (error) {
       context.logger.error(String(error));
       return String(error);
