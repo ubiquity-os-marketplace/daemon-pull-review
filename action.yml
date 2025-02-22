@@ -27,35 +27,10 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: "20.10.0"
-
-    - uses: oven-sh/setup-bun@v2
-
-    - name: Install dependencies
-      shell: bash
-      run: |
-        bun install --frozen-lockfile
-
-    - name: Get GitHub App token
-      if: env.APP_ID != '' && env.APP_PRIVATE_KEY != ''
-      uses: tibdex/github-app-token@v1.7.0
-      id: get_installation_token
-      with:
-        app_id: ${{ env.APP_ID }}
-        private_key: ${{ env.APP_PRIVATE_KEY }}
-
-    - name: Install dependencies for GitHub Auth
-      shell: bash
-      run: |
-        bun add "@actions/github" glob
-
     - name: Run compute reviews
       id: main
       shell: bash
       run: |
         node dist/index.js
       env:
-        GH_TOKEN: ${{ steps.get_installation_token.outputs.token }}
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
