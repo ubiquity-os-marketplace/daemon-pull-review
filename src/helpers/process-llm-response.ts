@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { Context } from "../types";
 import { TOOL_METHODS, ToolMethod, ToolMethodParams, TOOLS } from "../handlers/autofix/autofix-tools";
+import { AutofixAgent } from "../handlers/autofix/agent";
 
 export async function processLlmResponse(
   logger: Context["logger"],
@@ -42,7 +43,7 @@ export async function processLlmResponse(
 
 export async function processLlmResponseWithTools(
   context: Context<"issue_comment.created">,
-  logger: Context["logger"],
+  agent: AutofixAgent,
   res: OpenAI.Chat.Completions.ChatCompletion & {
     _request_id?: string | null;
     error?:
@@ -54,6 +55,7 @@ export async function processLlmResponseWithTools(
     | undefined;
   }
 ) {
+  const { logger } = context;
   if (!res.choices || res.choices.length === 0) {
     throw logger.error(`Unexpected no response from LLM, Reason: ${res.error ? res.error.message : "No reason specified"}`);
   }
@@ -68,10 +70,10 @@ export async function processLlmResponseWithTools(
     return res.choices[0].message.content;
   }
 
-  return await processToolCalls(toolCalls, context);
+  return await processToolCalls(toolCalls, context, agent);
 }
 
-async function processToolCalls(toolCalls: OpenAI.Chat.Completions.ChatCompletionMessageToolCall[], context: Context<"issue_comment.created">) {
+async function processToolCalls(toolCalls: OpenAI.Chat.Completions.ChatCompletionMessageToolCall[], context: Context<"issue_comment.created">, agent: AutofixAgent) {
   const toolResponses: { role: "tool"; tool_call_id: string; content: string }[] = [];
 
   function createToolResponse(toolCall: OpenAI.Chat.Completions.ChatCompletionMessageToolCall, content: string) {
@@ -96,7 +98,7 @@ async function processToolCalls(toolCalls: OpenAI.Chat.Completions.ChatCompletio
       continue;
     }
 
-    const toolResponse = await toolMethod(toolArgs, context);
+    const toolResponse = await toolMethod(toolArgs, context, agent);
 
     if (!toolResponse) {
       createToolResponse(toolCall, `Tool ${toolCall.function.name} returned no response`);

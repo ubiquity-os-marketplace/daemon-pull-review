@@ -20,7 +20,7 @@ export class CodebasePrimer {
    * after checking if `git` is installed or not. If not, it will install `git` first.
    */
   async pullCodebase() {
-    if (!fs.existsSync("repo-clone")) {
+    if (!fs.existsSync("../repo-clone")) {
       if (!this._isGitInstalled()) {
         this.logger.info("Git not installed, installing...");
         await this._installGit();
@@ -40,7 +40,7 @@ export class CodebasePrimer {
   private async _cloneRepo(repoUrl: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       this.logger.info("Cloning repository...");
-      execSync(`git clone --branch ${this.branch} ${repoUrl} repo-clone`, { stdio: "inherit" });
+      execSync(`git clone --branch ${this.branch} ${repoUrl} "../repo-clone"`, { stdio: "inherit" });
       resolve();
     });
   }
@@ -79,12 +79,5 @@ export class CodebasePrimer {
         }
       });
     });
-  }
-}
-
-export async function primeCodebase(context: Context, repoUrl: string) {
-  const primer = new CodebasePrimer(context, repoUrl);
-  if (!(await primer.pullCodebase())) {
-    throw context.logger.error(`Failed to pull the codebase from ${repoUrl}`);
   }
 }

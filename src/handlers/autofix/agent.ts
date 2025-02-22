@@ -81,7 +81,7 @@ export class AutofixAgent {
 
     while (true) {
       if (res) {
-        const toolCallResponses = await processLlmResponseWithTools(this.context, this.logger, res);
+        const toolCallResponses = await processLlmResponseWithTools(this.context, this, res);
         if (!toolCallResponses?.length) {
           messages.push({
             role: "assistant",
