@@ -37,8 +37,9 @@ export class CodebasePrimer {
 
   async authenticateAsBot() {
     this.logger.info("Authenticating as bot...");
-    execSync(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`, { stdio: "inherit" });
-    execSync(`git config --global user.name "github-actions[bot]"`, { stdio: "inherit" });
+    execSync(`gh auth login --with-token < ${this.context.env.GH_TOKEN}`, { stdio: "inherit" });
+    const loggedInStatus = execSync("gh auth status", { stdio: "pipe" }).toString();
+    this.logger.info(loggedInStatus);
   }
 
   /**
