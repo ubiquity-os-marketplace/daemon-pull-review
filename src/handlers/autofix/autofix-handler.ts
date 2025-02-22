@@ -7,6 +7,7 @@ export async function autofixHandler(context: Context<"issue_comment.created">):
   const finalOut = await agent.startAgent();
 
   if (finalOut) {
+    await context.commentHandler.postComment(context, context.logger.ok(finalOut[finalOut.length - 1]?.content as string || "Autofix handler executed successfully"));
     return {
       reason: "success",
       status: 200,
