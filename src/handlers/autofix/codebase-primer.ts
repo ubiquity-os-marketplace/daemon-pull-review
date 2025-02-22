@@ -36,8 +36,6 @@ export class CodebasePrimer {
   }
 
   async authenticateAsBot() {
-    this.logger.info("Authenticating as bot...");
-    execSync(`gh auth login --with-token ${this.context.env.GH_TOKEN}`, { stdio: "inherit" });
     const loggedInStatus = execSync("gh auth status", { stdio: "pipe" }).toString();
     this.logger.info(loggedInStatus);
   }
