@@ -1,11 +1,7 @@
 {
   "name": "daemon-pull-review",
   "description": "A highly context aware pull reviewer",
-  "ubiquity:listeners": [
-    "pull_request.opened",
-    "pull_request.ready_for_review",
-    "issue_comment.created"
-  ],
+  "ubiquity:listeners": ["pull_request.opened", "pull_request.ready_for_review", "issue_comment.created"],
   "skipBotEvents": true,
   "commands": {
     "autofix": {
@@ -17,6 +13,16 @@
     "default": {},
     "type": "object",
     "properties": {
+      "autofix": {
+        "default": {},
+        "type": "object",
+        "properties": {
+          "useForkCodebase": {
+            "default": true,
+            "type": "boolean"
+          }
+        }
+      },
       "openRouterAiModel": {
         "default": "anthropic/claude-3.5-sonnet",
         "type": "string"
