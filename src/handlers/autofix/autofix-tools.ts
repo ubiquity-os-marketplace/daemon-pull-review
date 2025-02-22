@@ -221,27 +221,27 @@ export const TOOLS: ChatCompletionTool[] = [
       strict: true,
     },
   },
-  {
-    type: "function",
-    function: {
-      name: "commitWorkspace",
-      description: "Commits all changes in the workspace to the given branch using Git add, commit and push",
-      parameters: {
-        type: "object",
-        properties: {
-          branch: {
-            type: "string",
-          },
-          message: {
-            type: "string",
-          },
-        },
-        required: ["branch", "message"],
-        additionalProperties: false,
-      },
-      strict: true,
-    },
-  },
+  // {
+  //   type: "function",
+  //   function: {
+  //     name: "commitWorkspace",
+  //     description: "Commits all changes in the workspace to the given branch using Git add, commit and push",
+  //     parameters: {
+  //       type: "object",
+  //       properties: {
+  //         branch: {
+  //           type: "string",
+  //         },
+  //         message: {
+  //           type: "string",
+  //         },
+  //       },
+  //       required: ["branch", "message"],
+  //       additionalProperties: false,
+  //     },
+  //     strict: true,
+  //   },
+  // },
   {
     type: "function",
     function: {
@@ -301,9 +301,9 @@ export const TOOLS: ChatCompletionTool[] = [
   },
 ];
 
-async function execSyncDispatch(command: string, options: any) {
-  return execSync(command, options);
-}
+// async function execSyncDispatch(command: string, options: any) {
+//   return execSync(command, options);
+// }
 
 export const TOOL_METHODS = {
   openPull: async function openPull(
@@ -387,48 +387,48 @@ export const TOOL_METHODS = {
       return String(error);
     }
   },
-  commitWorkspace: async function commitWorkspace(
-    {
-      branch,
-      message,
-    }: {
-      branch: string;
-      message: string;
-    },
-    context: Context,
-    agent: AutofixAgent
-  ) {
-    try {
-      const baseDir = path.resolve(process.cwd(), "../repo-clone");
-      const isRepo = fs.existsSync(path.join(baseDir, ".git"));
-      if (!isRepo) {
-        await execSyncDispatch(`git init`, { cwd: baseDir });
-      }
+  // commitWorkspace: async function commitWorkspace(
+  //   {
+  //     branch,
+  //     message,
+  //   }: {
+  //     branch: string;
+  //     message: string;
+  //   },
+  //   context: Context,
+  //   agent: AutofixAgent
+  // ) {
+  //   try {
+  //     const baseDir = path.resolve(process.cwd(), "../repo-clone");
+  //     const isRepo = fs.existsSync(path.join(baseDir, ".git"));
+  //     if (!isRepo) {
+  //       await execSyncDispatch(`git init`, { cwd: baseDir });
+  //     }
 
-      const remoteUrl = agent?.forkedRepoUrl || context.payload.repository.clone_url;
+  //     const remoteUrl = agent?.forkedRepoUrl || context.payload.repository.clone_url;
 
-      try {
-        await execSyncDispatch(`git remote add origin ${remoteUrl}`, { cwd: baseDir });
-      } catch {
-        await execSyncDispatch(`git remote set-url origin ${remoteUrl}`, { cwd: baseDir });
-      }
+  //     try {
+  //       await execSyncDispatch(`git remote add origin ${remoteUrl}`, { cwd: baseDir });
+  //     } catch {
+  //       await execSyncDispatch(`git remote set-url origin ${remoteUrl}`, { cwd: baseDir });
+  //     }
 
-      try {
-        await execSyncDispatch(`git rev-parse --verify ${branch}`, { cwd: baseDir });
-        await execSyncDispatch(`git checkout ${branch}`, { cwd: baseDir });
-      } catch {
-        await execSyncDispatch(`git checkout -b ${branch}`, { cwd: baseDir });
-      }
+  //     try {
+  //       await execSyncDispatch(`git rev-parse --verify ${branch}`, { cwd: baseDir });
+  //       await execSyncDispatch(`git checkout ${branch}`, { cwd: baseDir });
+  //     } catch {
+  //       await execSyncDispatch(`git checkout -b ${branch}`, { cwd: baseDir });
+  //     }
 
-      await execSyncDispatch(`git pull origin ${branch}`, { cwd: baseDir });
-      await execSyncDispatch(`git add .`, { cwd: baseDir });
-      await execSyncDispatch(`git commit -m "${message}"`, { cwd: baseDir });
-      await execSyncDispatch(`git push origin ${branch}`, { cwd: baseDir });
-    } catch (error) {
-      context.logger.error(String(error));
-      return String(error);
-    }
-  },
+  //     await execSyncDispatch(`git add .`, { cwd: baseDir });
+  //     await execSyncDispatch(`git pull origin ${branch}`, { cwd: baseDir });
+  //     await execSyncDispatch(`git commit -m "${message}"`, { cwd: baseDir });
+  //     await execSyncDispatch(`gh repo sync --branch ${branch} --force`, { cwd: baseDir });
+  //   } catch (error) {
+  //     context.logger.error(String(error));
+  //     return String(error);
+  //   }
+  // },
   commitSingleFile: async function commitSingleFile(
     {
       owner,
@@ -457,6 +457,7 @@ export const TOOL_METHODS = {
         content: Buffer.from(content).toString("base64"),
         path: filePath,
         branch,
+
       });
 
       return `Commit created successfully: ${res.data.commit.html_url}`;
