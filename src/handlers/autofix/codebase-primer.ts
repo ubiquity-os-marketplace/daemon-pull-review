@@ -41,9 +41,11 @@ export class CodebasePrimer {
     const loggedInStatus = execSync("gh auth status", { stdio: "pipe" }).toString();
     this.logger.info(loggedInStatus);
     const baseDir = path.resolve(process.cwd(), "../repo-clone");
-    execSync("git config --global credential.helper 'gh auth git-credential'", { stdio: "pipe", cwd: baseDir });
-    execSync("git config --global user.email 'github-actions[bot]@users.noreply.github.com'", { stdio: "pipe", cwd: baseDir });
-    execSync("git config --global user.name 'github-actions[bot]'", { stdio: "pipe", cwd: baseDir });
+    execSync("git config --global credential.helper 'gh auth git-credential'", { stdio: "inherit", cwd: baseDir });
+    execSync("git config --global user.email 'github-actions[bot]@users.noreply.github.com'", { stdio: "inherit", cwd: baseDir });
+    execSync("git config --global user.name 'github-actions[bot]'", { stdio: "inherit", cwd: baseDir });
+    execSync("git config user.email 'github-actions[bot]@users.noreply.github.com'", { stdio: "inherit", cwd: baseDir });
+    execSync("git config user.name 'github-actions[bot]'", { stdio: "inherit", cwd: baseDir });
     this.logger.info("Bot authenticated...");
   }
 
