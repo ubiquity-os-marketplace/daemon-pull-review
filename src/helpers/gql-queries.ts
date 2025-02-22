@@ -1,6 +1,6 @@
 import { PullRequest } from "@octokit/graphql-schema";
 
-type ClosedByPullRequestsReferences = {
+export type ClosedByPullRequestsReferences = {
   node: Pick<PullRequest, "url" | "title" | "number" | "body"> & { owner: string; name: string };
 };
 

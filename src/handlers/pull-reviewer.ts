@@ -4,10 +4,11 @@ import { CodeReviewStatus } from "../types/github-types";
 import { findGroundTruths } from "./ground-truths/find-ground-truths";
 import { Context } from "../types";
 import { CallbackResult } from "../types/proxy";
-import { closedByPullRequestsReferences, IssuesClosedByThisPr } from "../helpers/gql-queries";
+import { ClosedByPullRequestsReferences, closedByPullRequestsReferences, IssuesClosedByThisPr } from "../helpers/gql-queries";
 import { createCodeReviewSysMsg, llmQuery } from "./prompt";
 import { encodeAsync } from "../helpers/pull-helpers/pull-request-parsing";
 import { TokenLimits } from "../types/llm";
+import { RestEndpointMethodTypes } from "@octokit/rest";
 
 export class PullReviewer {
   readonly context: Context<"pull_request.opened" | "pull_request.ready_for_review">;
@@ -89,7 +90,7 @@ export class PullReviewer {
         issue_number: payload.pull_request.number,
       });
 
-      const botReaction = reactions.data.find((reaction) => reaction.content === "+1" && reaction.user?.type === "Bot");
+      const botReaction = reactions.data.find((reaction: RestEndpointMethodTypes["reactions"]["listForIssue"]["response"]["data"][0]) => reaction.content === "+1" && reaction.user?.type === "Bot");
 
       if (botReaction) {
         await this.context.octokit.rest.reactions.deleteForIssue({
@@ -147,7 +148,7 @@ export class PullReviewer {
       repo: name,
       issue_number: number,
       per_page: 100,
-    });
+    }) as RestEndpointMethodTypes["issues"]["listEvents"]["response"]["data"];
 
     const reviews = timeline.filter((event) => event.event === "reviewed");
     const botReviews = reviews.filter((review) => review.actor.type === "Bot");
@@ -270,7 +271,7 @@ export class PullReviewer {
         pr_number,
       });
 
-      const closingIssues = result.repository.pullRequest.closingIssuesReferences.edges.map((edge) => ({
+      const closingIssues = result.repository.pullRequest.closingIssuesReferences.edges.map((edge: ClosedByPullRequestsReferences) => ({
         number: edge.node.number,
         title: edge.node.title,
         url: edge.node.url,
