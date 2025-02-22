@@ -1,13 +1,16 @@
 {
   "name": "daemon-pull-review",
   "description": "A highly context aware pull reviewer",
-  "ubiquity:listeners": ["pull_request.opened", "pull_request.ready_for_review", "issue_comment.created"],
+  "ubiquity:listeners": [
+    "pull_request.opened",
+    "pull_request.ready_for_review",
+    "issue_comment.created"
+  ],
   "skipBotEvents": true,
   "commands": {
     "autofix": {
       "ubiquity:example": "/autofix",
       "description": "Detect and fix bugs within a pull request based on conversation inference and task specification.",
-      "parameters": {}
     }
   },
   "configuration": {
