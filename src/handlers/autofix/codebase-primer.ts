@@ -40,7 +40,6 @@ export class CodebasePrimer {
     this.logger.info("Authenticating as bot...");
     const loggedInStatus = execSync("gh auth status", { stdio: "pipe" }).toString();
     this.logger.info(loggedInStatus);
-    this.logger.info("Bot authenticated...");
   }
 
   /**
