@@ -36,8 +36,12 @@ export class CodebasePrimer {
   }
 
   async authenticateAsBot() {
+    this.logger.info("Authenticating as bot...");
     const loggedInStatus = execSync("gh auth status", { stdio: "pipe" }).toString();
     this.logger.info(loggedInStatus);
+
+    execSync(`git config --global user.email "${this.context.env.UBIQUITY_OS_APP_NAME}[bot]@users.noreply.github.com"`);
+    execSync(`git config --global user.name "${this.context.env.UBIQUITY_OS_APP_NAME}[bot]"`);
   }
 
   /**
