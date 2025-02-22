@@ -190,6 +190,6 @@ export class AutofixAgent {
     return setInterval(() => {
       process.stdout.write(`\r${steps[i++]} ${message}`);
       i &= 3;
-    }, 100);
+    }, 5000);
   }
 }
