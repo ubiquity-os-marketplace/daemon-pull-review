@@ -448,6 +448,20 @@ export const TOOL_METHODS = {
     context: Context,
     agent: AutofixAgent
   ) {
+
+    let sha: string;
+
+    if ("pull_request" in context.payload) {
+      sha = context.payload.pull_request.head.sha;
+    } else {
+      const res = await context.octokit.rest.repos.getBranch({
+        owner: "ubq-testing",
+        repo,
+        branch: agent?.forkedRepoBranch || context.payload.repository.default_branch,
+      });
+      sha = res.data.commit.sha;
+    }
+
     try {
       console.log("createCommit", owner, repo, branch, message, content);
       const res = await context.octokit.rest.repos.createOrUpdateFileContents({
@@ -457,7 +471,7 @@ export const TOOL_METHODS = {
         content: Buffer.from(content).toString("base64"),
         path: filePath,
         branch,
-
+        sha,
       });
 
       return `Commit created successfully: ${res.data.commit.html_url}`;
