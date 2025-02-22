@@ -10,7 +10,7 @@ import { encodeAsync } from "../helpers/pull-helpers/pull-request-parsing";
 import { TokenLimits } from "../types/llm";
 
 export class PullReviewer {
-  readonly context: Context;
+  readonly context: Context<"pull_request.opened" | "pull_request.ready_for_review">;
   private _oneDay = 24 * 60 * 60 * 1000;
 
   constructor(context: Context<"pull_request.opened" | "pull_request.ready_for_review">) {

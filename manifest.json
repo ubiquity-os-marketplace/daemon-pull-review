@@ -10,7 +10,7 @@
   "commands": {
     "autofix": {
       "ubiquity:example": "/autofix",
-      "description": "Detect and fix bugs within a pull request based on conversation inference and task specification.",
+      "description": "Detect and fix bugs within a pull request based on conversation inference and task specification."
     }
   },
   "configuration": {

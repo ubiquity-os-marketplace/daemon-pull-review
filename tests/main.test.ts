@@ -228,9 +228,9 @@ function createContext() {
   const user = db.users.findFirst({ where: { id: { equals: 1 } } });
   return {
     payload: {
-      pull_request: db.pull.findFirst({ where: { id: { equals: 3 } } }) as unknown as Context["payload"]["pull_request"],
+      pull_request: db.pull.findFirst({ where: { id: { equals: 3 } } }) as unknown as Context<"pull_request.opened">["payload"]["pull_request"],
       sender: user,
-      repository: db.repo.findFirst({ where: { id: { equals: 1 } } }) as unknown as Context["payload"]["repository"],
+      repository: db.repo.findFirst({ where: { id: { equals: 1 } } }) as unknown as Context<"pull_request.opened">["payload"]["repository"],
       action: "ready_for_review" as string,
       installation: { id: 1 } as unknown as Context["payload"]["installation"],
       organization: { login: "ubiquity" } as unknown as Context["payload"]["organization"],
@@ -263,5 +263,5 @@ function createContext() {
     },
     octokit: new Octokit(),
     eventName: "pull_request.ready_for_review" as SupportedEvents,
-  } as unknown as Context;
+  } as unknown as Context<"pull_request.opened" | "pull_request.ready_for_review">
 }
