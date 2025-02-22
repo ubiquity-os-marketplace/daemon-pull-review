@@ -449,17 +449,25 @@ export const TOOL_METHODS = {
     agent: AutofixAgent
   ) {
 
-    let sha: string;
+    let fileSha: string;
 
-    if ("pull_request" in context.payload) {
-      sha = context.payload.pull_request.head.sha;
-    } else {
-      const res = await context.octokit.rest.repos.getBranch({
+    try {
+      const res = await context.octokit.rest.repos.getContent({
         owner: "ubq-testing",
         repo,
-        branch: agent?.forkedRepoBranch || context.payload.repository.default_branch,
+        path: filePath,
+        ref: branch,
       });
-      sha = res.data.commit.sha;
+
+      if ("sha" in res.data) {
+        fileSha = res.data.sha;
+      } else {
+        fileSha = "";
+      }
+
+    } catch (error) {
+      context.logger.error(String(error));
+      return String(error);
     }
 
     try {
@@ -471,7 +479,7 @@ export const TOOL_METHODS = {
         content: Buffer.from(content).toString("base64"),
         path: filePath,
         branch,
-        sha,
+        sha: fileSha,
       });
 
       return `Commit created successfully: ${res.data.commit.html_url}`;
