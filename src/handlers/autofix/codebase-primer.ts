@@ -1,5 +1,6 @@
 import { exec, execSync } from "child_process";
 import * as fs from "fs";
+import * as path from "path";
 import { Context } from "../../types";
 
 export class CodebasePrimer {
@@ -42,7 +43,17 @@ export class CodebasePrimer {
 
     execSync(`git config --global user.email "${this.context.env.UBIQUITY_OS_APP_NAME}[bot]@users.noreply.github.com"`);
     execSync(`git config --global user.name "${this.context.env.UBIQUITY_OS_APP_NAME}[bot]"`);
-    execSync(`git remote set-url origin https://${this.context.env.GH_TOKEN}@github.com/${this.repoUrl.replace('https://github.com/', '')}`);
+
+    const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+    if (!token) {
+      this.logger.error("GitHub token not found. Please set GH_TOKEN or GITHUB_TOKEN in your environment variables.");
+      return;
+    }
+    execSync(`git config --global credential.helper 'store --file ~/.git-credentials'`);
+    fs.writeFileSync(
+      path.join(process.env.HOME || process.env.USERPROFILE || "", '.git-credentials'),
+      `https://${token}:x-oauth-basic@github.com\n`
+    );
   }
 
   /**
