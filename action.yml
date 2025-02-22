@@ -25,12 +25,5 @@ outputs:
     value: ${{ steps.main.outputs.result }}
 
 runs:
-  using: "composite"
-  steps:
-    - name: Run compute reviews
-      id: main
-      shell: bash
-      run: |
-        node dist/index.js
-      env:
-        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+  using: "node20"
+  main: "dist/index.js"
