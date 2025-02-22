@@ -8,7 +8,11 @@ import { execSync } from "child_process";
 
 type ToolMethods_ = typeof TOOL_METHODS;
 export type ToolMethodParams<T extends keyof ToolMethods_> = Parameters<ToolMethods_[T]>[0];
-export type ToolMethod<T extends keyof ToolMethods_ = keyof ToolMethods_> = (args: ToolMethodParams<T>, context: Context, agent: AutofixAgent) => Promise<string>;
+export type ToolMethod<T extends keyof ToolMethods_ = keyof ToolMethods_> = (
+  args: ToolMethodParams<T>,
+  context: Context,
+  agent: AutofixAgent
+) => Promise<string>;
 
 export const TOOLS: ChatCompletionTool[] = [
   {
@@ -308,7 +312,7 @@ export const TOOL_METHODS = {
       repo,
       title,
       body,
-      head
+      head,
     }: {
       owner: string;
       repo: string;
@@ -324,7 +328,7 @@ export const TOOL_METHODS = {
       const res = await context.octokit.rest.pulls.create({
         /**
          * Overriding this for now but logs show it PRing against `ubiquity` which is correct.
-         * 
+         *
          * Although it likely should be taken direct from context, if we consider that the agent
          * might decide to open a PR against a different repo than the one that triggered the event
          * which would be a valid use case.
@@ -338,7 +342,7 @@ export const TOOL_METHODS = {
       });
       return `Pull opened successfully: ${res.data.html_url}`;
     } catch (error) {
-      context.logger.error(String(error))
+      context.logger.error(String(error));
       return String(error);
     }
   },
@@ -353,7 +357,7 @@ export const TOOL_METHODS = {
       branchName: string;
     },
     context: Context,
-    agent: AutofixAgent,
+    agent: AutofixAgent
   ) {
     let sha: string;
 
@@ -363,7 +367,7 @@ export const TOOL_METHODS = {
       const res = await context.octokit.rest.repos.getBranch({
         owner: "ubq-testing",
         repo,
-        branch: agent?.forkedRepoBranch || context.payload.repository.default_branch
+        branch: agent?.forkedRepoBranch || context.payload.repository.default_branch,
       });
       sha = res.data.commit.sha;
     }
@@ -378,9 +382,8 @@ export const TOOL_METHODS = {
       });
 
       return `Branch created successfully: ${res.data.url}`;
-    }
-    catch (error) {
-      context.logger.error(String(error))
+    } catch (error) {
+      context.logger.error(String(error));
       return String(error);
     }
   },
@@ -435,7 +438,7 @@ export const TOOL_METHODS = {
       branch,
       message,
       content,
-      filePath
+      filePath,
     }: {
       owner: string;
       repo: string;
@@ -460,7 +463,7 @@ export const TOOL_METHODS = {
 
       return `Commit created successfully: ${res.data.commit.html_url}`;
     } catch (error) {
-      context.logger.error(String(error))
+      context.logger.error(String(error));
       return String(error);
     }
   },
@@ -485,12 +488,12 @@ export const TOOL_METHODS = {
         owner: "ubq-testing",
         repo,
         issue_number: issueNumber,
-        body
+        body,
       });
 
       return `Commented on pull successfully: ${res.data.html_url}`;
     } catch (error) {
-      context.logger.error(String(error))
+      context.logger.error(String(error));
       return String(error);
     }
   },
@@ -520,7 +523,7 @@ export const TOOL_METHODS = {
 
       return `Pull body updated successfully: ${res.data.html_url}`;
     } catch (error) {
-      context.logger.error(String(error))
+      context.logger.error(String(error));
       return String(error);
     }
   },
@@ -550,7 +553,7 @@ export const TOOL_METHODS = {
 
       return `Requested review successfully: ${res.data.html_url}`;
     } catch (error) {
-      context.logger.error(String(error))
+      context.logger.error(String(error));
       return String(error);
     }
   },
@@ -580,7 +583,7 @@ export const TOOL_METHODS = {
 
       return `${res.data.merged ? "Merged" : "Not merged"} successfully: ${res.data.sha}`;
     } catch (error) {
-      context.logger.error(String(error))
+      context.logger.error(String(error));
       return String(error);
     }
   },
@@ -600,7 +603,7 @@ export const TOOL_METHODS = {
       const codebaseSearch = new CodebaseSearch(context);
       return (await codebaseSearch.searchCodebase(query, type)).join("\n");
     } catch (error) {
-      context.logger.error(String(error))
+      context.logger.error(String(error));
       return String(error);
     }
   },
@@ -616,7 +619,7 @@ export const TOOL_METHODS = {
 
       return results.join("\n");
     } catch (error) {
-      context.logger.error(String(error))
+      context.logger.error(String(error));
       return String(error);
     }
   },
@@ -627,7 +630,7 @@ export const TOOL_METHODS = {
       fs.writeFileSync(path.join(baseDir, filePath), content, { encoding: "utf-8" });
       return `Updated file content successfully: ${filePath}`;
     } catch (error) {
-      console.error(String(error))
+      console.error(String(error));
       return String(error);
     }
   },

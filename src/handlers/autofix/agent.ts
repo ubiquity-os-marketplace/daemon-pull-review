@@ -53,7 +53,7 @@ export class AutofixAgent {
     }
 
     if ("comments" in data) {
-      await this.fixBugs(data);
+      return await this.fixBugs(data);
     } else {
       throw this.logger.error("Unexpected data found for bug deduction in conversation");
     }
@@ -116,6 +116,8 @@ export class AutofixAgent {
     clearInterval(logInterval);
 
     this.logger.info("Bug fixing completed", { messages });
+
+    return messages;
   }
 
   async messageLlm(options: ChatCompletionCreateParamsNonStreaming) {

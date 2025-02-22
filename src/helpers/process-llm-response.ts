@@ -9,12 +9,12 @@ export async function processLlmResponse(
   res: OpenAI.Chat.Completions.ChatCompletion & {
     _request_id?: string | null;
     error?:
-    | {
-      message: string;
-      code: number;
-      metadata: object;
-    }
-    | undefined;
+      | {
+          message: string;
+          code: number;
+          metadata: object;
+        }
+      | undefined;
   }
 ) {
   if (!res.choices || res.choices.length === 0) {
@@ -47,12 +47,12 @@ export async function processLlmResponseWithTools(
   res: OpenAI.Chat.Completions.ChatCompletion & {
     _request_id?: string | null;
     error?:
-    | {
-      message: string;
-      code: number;
-      metadata: object;
-    }
-    | undefined;
+      | {
+          message: string;
+          code: number;
+          metadata: object;
+        }
+      | undefined;
   }
 ) {
   const { logger } = context;
@@ -73,7 +73,11 @@ export async function processLlmResponseWithTools(
   return await processToolCalls(toolCalls, context, agent);
 }
 
-async function processToolCalls(toolCalls: OpenAI.Chat.Completions.ChatCompletionMessageToolCall[], context: Context<"issue_comment.created">, agent: AutofixAgent) {
+async function processToolCalls(
+  toolCalls: OpenAI.Chat.Completions.ChatCompletionMessageToolCall[],
+  context: Context<"issue_comment.created">,
+  agent: AutofixAgent
+) {
   const toolResponses: { role: "tool"; tool_call_id: string; content: string }[] = [];
 
   function createToolResponse(toolCall: OpenAI.Chat.Completions.ChatCompletionMessageToolCall, content: string) {
