@@ -35,7 +35,6 @@ export class CodebasePrimer {
     }
   }
 
-
   async authenticateAsBot() {
     const { env: { GH_TOKEN } } = this.context
     return new Promise<void>((resolve, reject) => {
