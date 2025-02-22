@@ -28,6 +28,8 @@ export class CodebasePrimer {
       this.logger.info("Cloning repository...");
       await this._cloneRepo(this.repoUrl.endsWith(".git") ? this.repoUrl : `${this.repoUrl}.git`);
       this.logger.info("Repository cloned...");
+
+
       // await this.authenticateAsBot();
       return true;
     } else {
@@ -35,14 +37,11 @@ export class CodebasePrimer {
     }
   }
 
-  // async authenticateAsBot() {
-  //   const { env: { GH_TOKEN } } = this.context
-  //   return new Promise<void>((resolve, reject) => {
-  //     this.logger.info("Authenticating as bot...");
-  //     execSync(`gh auth login --with-token ${GH_TOKEN}`, { stdio: "inherit" });
-  //     resolve();
-  //   });
-  // }
+  async authenticateAsBot() {
+    this.logger.info("Authenticating as bot...");
+    execSync(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`, { stdio: "inherit" });
+    execSync(`git config --global user.name "github-actions[bot]"`, { stdio: "inherit" });
+  }
 
   /**
    * Will clone the repository using `git clone` command

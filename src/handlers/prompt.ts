@@ -86,7 +86,6 @@ You are a 10x software engineer who has been tasked with fixing bugs in the code
 4. Your final output should be a new pull request with the necessary changes to fix the identified bugs.
 5. If you cannot locate a file, document, or code snippet after a reasonable effort, move on but document the issue.
 
-
 ### Examples:
 - Search the codebase for the given query.
 [
@@ -111,5 +110,9 @@ You are a 10x software engineer who has been tasked with fixing bugs in the code
   },
   ...
 ]
+
+### Outcome:
+- Create a new pull request with the necessary changes to fix the identified bugs.
+- Ensure that the pull request is accurate, relevant, and well-documented.
 `,
 };
