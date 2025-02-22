@@ -38,7 +38,7 @@ function selectIncludedFiles(
   return includedFiles;
 }
 
-export async function processPullRequestDiff(diff: string, tokenLimits: TokenLimits, context: Context<"pull_request.opened">) {
+export async function processPullRequestDiff(diff: string, tokenLimits: TokenLimits, context: Context<"pull_request.opened" | "pull_request.ready_for_review">) {
   const excludedFilePatterns = await getExcludedFiles(context);
   const sortedDiffs = await filterAndSortDiffs(diff, excludedFilePatterns);
 

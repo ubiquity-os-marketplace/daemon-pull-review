@@ -2,7 +2,7 @@ import { Context } from "../../types/context";
 import { TokenLimits } from "../../types/llm";
 import { processPullRequestDiff } from "./pull-request-parsing";
 
-export async function fetchPullRequestDiff(context: Context, org: string, repo: string, issue: number, tokenLimits: TokenLimits) {
+export async function fetchPullRequestDiff(context: Context<"pull_request.opened" | "pull_request.ready_for_review">, org: string, repo: string, issue: number, tokenLimits: TokenLimits) {
   const { octokit } = context;
   let diff: string;
 
