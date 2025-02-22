@@ -150,14 +150,12 @@ export class AutofixAgent {
       const {
         head: {
           repo: { clone_url },
+          ref,
         },
-        base: { ref },
       } = pullRequest.data;
 
       this.forkedRepoUrl = clone_url;
       this.forkedRepoBranch = ref;
-
-      return this.forkedRepoUrl;
     }
     return this.forkedRepoUrl;
   }
@@ -168,14 +166,16 @@ export class AutofixAgent {
     }
 
     if (this.context.config.autofix.useForkCodebase) {
-      this.logger.info("Using forked codebase...");
       await this.getForkedRepoUrl();
+      this.logger.info(`Using forked codebase: ${this.forkedRepoUrl}@${this.forkedRepoBranch}`);
+    } else {
+      this.logger.info(`Using base codebase: ${this.context.payload.repository.full_name}@${this.context.payload.repository.default_branch}`);
     }
 
     this.codebasePrimer = new CodebasePrimer(
       this.context,
       this.forkedRepoUrl ? this.forkedRepoUrl : `https://github.com/${this.context.payload.repository.owner.login}/${this.context.payload.repository.name}.git`,
-      this.forkedRepoBranch ? this.forkedRepoBranch : "development"
+      this.forkedRepoBranch ? this.forkedRepoBranch : this.context.payload.repository.default_branch
     );
 
     await this.codebasePrimer.pullCodebase();
