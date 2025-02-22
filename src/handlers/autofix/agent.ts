@@ -22,7 +22,7 @@ export class AutofixAgent {
   context: Context<"issue_comment.created">;
   logger: Context["logger"];
 
-  codebasePrimer: CodebasePrimer;
+  codebasePrimer: CodebasePrimer | null = null;
   codebaseSearch: CodebaseSearch;
   conversationBugDeduction: ConversationBugDeduction;
 
@@ -102,16 +102,12 @@ export class AutofixAgent {
           messages.push(toolCall);
         }
 
-        console.log("messages", messages.slice(-2));
-
         const { messages: newMessages, res: newRes } = await this.messageLlm({
           model: this.context.config.openRouterAiModel,
           messages,
         });
 
         messages = newMessages;
-
-        console.log("newMessages", newMessages.slice(-2));
         res = newRes;
       } else {
         break;
@@ -178,16 +174,12 @@ export class AutofixAgent {
 
     this.codebasePrimer = new CodebasePrimer(
       this.context,
-      this.forkedRepoUrl ? this.forkedRepoUrl : `https://github.com/${context.payload.repository.owner.login}/${context.payload.repository.name}.git`,
+      this.forkedRepoUrl ? this.forkedRepoUrl : `https://github.com/${this.context.payload.repository.owner.login}/${this.context.payload.repository.name}.git`,
       this.forkedRepoBranch ? this.forkedRepoBranch : "development"
     );
 
-    console.log("forked Repo URL", this.codebasePrimer.repoUrl);
-
     await this.codebasePrimer.pullCodebase();
     this.initialized = true;
-
-    throw new Error("Not implemented");
   }
 
   backgroundLog(message: string) {

@@ -219,6 +219,7 @@ export const TOOL_METHODS = {
     context: Context
   ) {
     try {
+      console.log("openPull", owner, repo, title, head, base, body);
       // const res = await context.octokit.rest.pulls.create({
       //     owner, repo, title, head, base, body,
       // });
@@ -242,6 +243,7 @@ export const TOOL_METHODS = {
     context: Context
   ) {
     try {
+      console.log("commentOnPull", owner, repo, issueNumber, body);
       // const res = await context.octokit.rest.issues.createComment({
       //     owner, repo, issue_number: issueNumber, body
       // });
@@ -266,6 +268,7 @@ export const TOOL_METHODS = {
     context: Context
   ) {
     try {
+      console.log("updatePullBody", owner, repo, pullNumber, body);
       // const res = await context.octokit.rest.pulls.update({
       //     owner, repo, pull_number: pullNumber, body,
       // });
@@ -289,6 +292,7 @@ export const TOOL_METHODS = {
     },
     context: Context
   ) {
+    console.log("requestReview", owner, repo, pullNumber, reviewers);
     try {
       // const res = await context.octokit.rest.pulls.requestReviewers({
       //     owner, repo, pull_number: pullNumber, reviewers,
@@ -314,6 +318,7 @@ export const TOOL_METHODS = {
     context: Context
   ) {
     try {
+      console.log("mergePull", owner, repo, pullNumber, mergeMethod);
       // const res = await context.octokit.rest.pulls.merge({
       //     owner, repo, pull_number: pullNumber, merge_method: mergeMethod,
       // });
@@ -336,13 +341,13 @@ export const TOOL_METHODS = {
     try {
       console.log("searchCodebase", query, type);
       const codebaseSearch = new CodebaseSearch(context);
-      console.log("codebaseSearch initialized");
       return (await codebaseSearch.searchCodebase(query, type)).join("\n");
     } catch (error) {
       return error;
     }
   },
   getFileContent: async function getFileContent({ filePaths }: { filePaths: string[] }, context: Context) {
+    console.log("getFileContent", filePaths);
     try {
       const baseDir = path.resolve(process.cwd(), "repo-clone");
       const results: string[] = [];
@@ -357,6 +362,7 @@ export const TOOL_METHODS = {
     }
   },
   updateFileContent: async function updateFileContent({ filePath, content }: { filePath: string; content: string }) {
+    console.log("updateFileContent", filePath, content);
     try {
       const baseDir = path.resolve(process.cwd(), "repo-clone");
       fs.writeFileSync(path.join(baseDir, filePath), content, { encoding: "utf-8" });

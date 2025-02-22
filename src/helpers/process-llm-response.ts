@@ -8,12 +8,12 @@ export async function processLlmResponse(
   res: OpenAI.Chat.Completions.ChatCompletion & {
     _request_id?: string | null;
     error?:
-      | {
-          message: string;
-          code: number;
-          metadata: object;
-        }
-      | undefined;
+    | {
+      message: string;
+      code: number;
+      metadata: object;
+    }
+    | undefined;
   }
 ) {
   if (!res.choices || res.choices.length === 0) {
@@ -46,12 +46,12 @@ export async function processLlmResponseWithTools(
   res: OpenAI.Chat.Completions.ChatCompletion & {
     _request_id?: string | null;
     error?:
-      | {
-          message: string;
-          code: number;
-          metadata: object;
-        }
-      | undefined;
+    | {
+      message: string;
+      code: number;
+      metadata: object;
+    }
+    | undefined;
   }
 ) {
   if (!res.choices || res.choices.length === 0) {
@@ -65,7 +65,6 @@ export async function processLlmResponseWithTools(
   const toolCalls = res.choices[0].message.tool_calls;
 
   if (!toolCalls) {
-    console.log("No tool calls found");
     return res.choices[0].message.content;
   }
 
@@ -86,7 +85,6 @@ async function processToolCalls(toolCalls: OpenAI.Chat.Completions.ChatCompletio
   for (const toolCall of toolCalls) {
     const tool = TOOLS.find((tool) => tool.function.name === toolCall.function.name);
     if (!tool) {
-      console.log("tool not found", toolCall.function.name);
       createToolResponse(toolCall, `${toolCall.function.name} not found in tools list`);
       continue;
     }
@@ -94,14 +92,11 @@ async function processToolCalls(toolCalls: OpenAI.Chat.Completions.ChatCompletio
     const toolArgs: ToolMethodParams<keyof typeof TOOL_METHODS> = JSON.parse(toolCall.function.arguments) satisfies ToolMethodParams<keyof typeof TOOL_METHODS>;
     const toolMethod = TOOL_METHODS[tool.function.name as keyof typeof TOOL_METHODS] as ToolMethod;
     if (!toolMethod) {
-      console.log("toolMethod not found", toolCall.function.name);
       createToolResponse(toolCall, `${toolCall.function.name} not found in tool methods list`);
       continue;
     }
 
     const toolResponse = await toolMethod(toolArgs, context);
-
-    console.log(`Tool ${toolCall.function.name} response`, toolResponse);
 
     if (!toolResponse) {
       createToolResponse(toolCall, `Tool ${toolCall.function.name} returned no response`);
@@ -109,8 +104,6 @@ async function processToolCalls(toolCalls: OpenAI.Chat.Completions.ChatCompletio
     }
     createToolResponse(toolCall, toolResponse);
   }
-
-  console.log("toolResponses", toolResponses);
 
   return toolResponses;
 }
