@@ -40,10 +40,6 @@ export class CodebasePrimer {
     this.logger.info("Authenticating as bot...");
     const loggedInStatus = execSync("gh auth status", { stdio: "pipe" }).toString();
     this.logger.info(loggedInStatus);
-    const baseDir = path.resolve(process.cwd(), "../repo-clone");
-    exec(`git config --global user.email "github-actions[bot]@users.noreply.github.com"`, { cwd: baseDir });
-    exec(`git config --global user.name "github-actions[bot]"`, { cwd: baseDir });
-    exec(`git config --global credential.helper store`, { cwd: baseDir });
   }
 
   /**
@@ -52,8 +48,7 @@ export class CodebasePrimer {
   private async _cloneRepo(repoUrl: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       this.logger.info("Cloning repository...");
-      execSync(`git clone --branch ${this.branch} ${repoUrl} "../repo-clone"`, { stdio: "inherit" });
-      resolve();
+      execSync(`git -c credential.helper='!gh auth git-credential' clone --branch ${this.branch} ${repoUrl} "../repo-clone"`, { stdio: "inherit" }); resolve();
     });
   }
 
