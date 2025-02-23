@@ -4,7 +4,6 @@ import { CodebaseSearch } from "./codebase-search";
 import * as fs from "fs";
 import * as path from "path";
 import { AutofixAgent } from "./agent";
-import { execSync } from "child_process";
 
 type ToolMethods_ = typeof TOOL_METHODS;
 export type ToolMethodParams<T extends keyof ToolMethods_> = Parameters<ToolMethods_[T]>[0];
@@ -326,14 +325,7 @@ export const TOOL_METHODS = {
     try {
       console.log("openPull", owner, repo, title, body);
       const res = await context.octokit.rest.pulls.create({
-        /**
-         * Overriding this for now but logs show it PRing against `ubiquity` which is correct.
-         *
-         * Although it likely should be taken direct from context, if we consider that the agent
-         * might decide to open a PR against a different repo than the one that triggered the event
-         * which would be a valid use case.
-         */
-        owner: "ubq-testing",
+        owner: context.payload.repository.owner.login,
         repo,
         title,
         head,
@@ -365,7 +357,7 @@ export const TOOL_METHODS = {
       sha = context.payload.pull_request.head.sha;
     } else {
       const res = await context.octokit.rest.repos.getBranch({
-        owner: "ubq-testing",
+        owner: context.payload.repository.owner.login,
         repo,
         branch: agent?.forkedRepoBranch || context.payload.repository.default_branch,
       });
@@ -375,7 +367,7 @@ export const TOOL_METHODS = {
     try {
       console.log("createBranch", owner, repo, branchName);
       const res = await context.octokit.rest.git.createRef({
-        owner: "ubq-testing",
+        owner: context.payload.repository.owner.login,
         repo,
         ref: `refs/heads/${branchName}`,
         sha,
@@ -448,12 +440,11 @@ export const TOOL_METHODS = {
     context: Context,
     agent: AutofixAgent
   ) {
-
     let fileSha: string;
 
     try {
       const res = await context.octokit.rest.repos.getContent({
-        owner: "ubq-testing",
+        owner: context.payload.repository.owner.login,
         repo,
         path: filePath,
         ref: branch,
@@ -464,7 +455,6 @@ export const TOOL_METHODS = {
       } else {
         fileSha = "";
       }
-
     } catch (error) {
       context.logger.error(String(error));
       return String(error);
@@ -473,7 +463,8 @@ export const TOOL_METHODS = {
     try {
       console.log("createCommit", owner, repo, branch, message, content);
       const res = await context.octokit.rest.repos.createOrUpdateFileContents({
-        owner: "ubq-testing",
+        /** */
+        owner: context.payload.repository.owner.login,
         repo,
         message,
         content: Buffer.from(content).toString("base64"),
@@ -506,7 +497,7 @@ export const TOOL_METHODS = {
     try {
       console.log("commentOnPull", owner, repo, issueNumber, body);
       const res = await context.octokit.rest.issues.createComment({
-        owner: "ubq-testing",
+        owner: context.payload.repository.owner.login,
         repo,
         issue_number: issueNumber,
         body,
@@ -536,7 +527,7 @@ export const TOOL_METHODS = {
     try {
       console.log("updatePullBody", owner, repo, pullNumber, body);
       const res = await context.octokit.rest.pulls.update({
-        owner: "ubq-testing",
+        owner: context.payload.repository.owner.login,
         repo,
         pull_number: pullNumber,
         body,
@@ -566,7 +557,7 @@ export const TOOL_METHODS = {
     console.log("requestReview", owner, repo, pullNumber, reviewers);
     try {
       const res = await context.octokit.rest.pulls.requestReviewers({
-        owner: "ubq-testing",
+        owner: context.payload.repository.owner.login,
         repo,
         pull_number: pullNumber,
         reviewers,
@@ -596,7 +587,7 @@ export const TOOL_METHODS = {
     try {
       console.log("mergePull", owner, repo, pullNumber, mergeMethod);
       const res = await context.octokit.rest.pulls.merge({
-        owner: "ubq-testing",
+        owner: context.payload.repository.owner.login,
         repo,
         pull_number: pullNumber,
         merge_method: mergeMethod,

@@ -255,5 +255,5 @@ function createContext() {
     },
     octokit: new Octokit(),
     eventName: "pull_request.ready_for_review" as SupportedEvents,
-  } as unknown as Context<"pull_request.opened" | "pull_request.ready_for_review">
+  } as unknown as Context<"pull_request.opened" | "pull_request.ready_for_review">;
 }

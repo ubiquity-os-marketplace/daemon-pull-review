@@ -43,10 +43,7 @@ export async function getExcludedFiles(context: Context<"pull_request.opened" | 
   return [...gitAttributesLinguistGenerated, ...gitIgnoreExcludedFiles];
 }
 
-async function getFileContent(
-  context: Context<"pull_request.ready_for_review" | "pull_request.opened">,
-  path: string
-): Promise<string | null> {
+async function getFileContent(context: Context<"pull_request.ready_for_review" | "pull_request.opened">, path: string): Promise<string | null> {
   try {
     const response = await context.octokit.rest.repos.getContent({
       owner: context.payload.repository.owner.login,

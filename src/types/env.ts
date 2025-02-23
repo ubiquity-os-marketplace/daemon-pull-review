@@ -14,7 +14,6 @@ export const envSchema = T.Object({
   UBIQUITY_OS_APP_NAME: T.String({ default: "UbiquityOS" }),
   KERNEL_PUBLIC_KEY: T.Optional(T.String()),
   LOG_LEVEL: T.Enum(LOG_LEVEL, { default: LOG_LEVEL.INFO }),
-  GH_TOKEN: T.String(),
 });
 
 export type Env = StaticDecode<typeof envSchema>;

@@ -92,7 +92,9 @@ export class PullReviewer {
         issue_number: payload.pull_request.number,
       });
 
-      const botReaction = reactions.data.find((reaction: RestEndpointMethodTypes["reactions"]["listForIssue"]["response"]["data"][0]) => reaction.content === "+1" && reaction.user?.type === "Bot");
+      const botReaction = reactions.data.find(
+        (reaction: RestEndpointMethodTypes["reactions"]["listForIssue"]["response"]["data"][0]) => reaction.content === "+1" && reaction.user?.type === "Bot"
+      );
 
       if (botReaction) {
         await this.context.octokit.rest.reactions.deleteForIssue({
@@ -145,12 +147,12 @@ export class PullReviewer {
 
     logger.info(`${repository.owner.login}/${repository.name}#${number} - ${action}`);
 
-    const timeline = await this.context.octokit.paginate(this.context.octokit.rest.issues.listEvents, {
+    const timeline = (await this.context.octokit.paginate(this.context.octokit.rest.issues.listEvents, {
       owner: owner.login,
       repo: name,
       issue_number: number,
       per_page: 100,
-    }) as RestEndpointMethodTypes["issues"]["listEvents"]["response"]["data"];
+    })) as RestEndpointMethodTypes["issues"]["listEvents"]["response"]["data"];
 
     const reviews = timeline.filter((event) => event.event === "reviewed");
     const botReviews = reviews.filter((review) => review.actor.type === "Bot");
