@@ -62,7 +62,7 @@ describe("Pull Reviewer tests", () => {
       const { PullReviewer } = await import("../src/handlers/pull-reviewer");
       const pullReviewer = new PullReviewer(createContext());
       jest.spyOn(pullReviewer, "canPerformReview").mockImplementation(async () => true);
-      jest.spyOn(pullReviewer, "getTaskNumberFromPullRequest").mockImplementation(async () => 1);
+      jest.spyOn(pullReviewer, "getTaskNumberFromPullRequest").mockImplementation(async () => [1]);
       pullReviewer.addThumbsUpReaction = jest.fn(() => Promise.resolve());
       const result = await pullReviewer.performPullPrecheck();
       expect(pullReviewer.addThumbsUpReaction).toHaveBeenCalled();
@@ -184,10 +184,11 @@ describe("Pull Reviewer tests", () => {
     });
   });
 
-  it("should convert PR to draft if no issue is linked", async () => {
+  it("should skip precheck if no issue is linked", async () => {
     const { PullReviewer } = await import("../src/handlers/pull-reviewer");
     const context = createContext();
     const pullReviewer = new PullReviewer(context);
+    jest.spyOn(pullReviewer, "canPerformReview").mockImplementation(async () => true);
 
     // Mock empty closing issues
     jest.spyOn(pullReviewer, "checkIfPrClosesIssues").mockResolvedValue({
@@ -195,17 +196,8 @@ describe("Pull Reviewer tests", () => {
       issues: [],
     });
 
-    await expect(pullReviewer.getTaskNumberFromPullRequest(context)).rejects.toMatchObject({
-      logMessage: {
-        diff: "```diff\n! You need to link an issue before converting the pull request to ready for review.\n```",
-        level: "error",
-        raw: "You need to link an issue before converting the pull request to ready for review.",
-        type: "error",
-      },
-      metadata: {
-        caller: "PullReviewer.error",
-      },
-    });
+    expect(await pullReviewer.getTaskNumberFromPullRequest(context)).toBe(null);
+    expect(await pullReviewer.performPullPrecheck()).toEqual({ status: 200, reason: "Pull review data not found, Skipping automated review" });
   });
 });
 

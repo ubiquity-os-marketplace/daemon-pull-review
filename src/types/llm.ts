@@ -1,7 +1,7 @@
 import { CODE_REVIEW_GROUND_TRUTHS_SYSTEM_MESSAGE } from "../handlers/ground-truths/prompts";
 
 export type CodeReviewAppParams = {
-  taskSpecification: string;
+  taskSpecifications: string[];
 };
 
 export type CodeReviewGroundTruthSystemMessage = typeof CODE_REVIEW_GROUND_TRUTHS_SYSTEM_MESSAGE;

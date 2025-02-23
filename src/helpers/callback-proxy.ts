@@ -1,4 +1,5 @@
 import { autofixHandler } from "../handlers/autofix/autofix-handler";
+import { handlePullRequestEditedEvent } from "../handlers/closing-keyword";
 import { PullReviewer } from "../handlers/pull-reviewer";
 import { Context, SupportedEvents } from "../types";
 import { CallbackResult, ProxyCallbacks } from "../types/proxy";
@@ -11,8 +12,10 @@ import { CallbackResult, ProxyCallbacks } from "../types/proxy";
  * us to add more callbacks for a particular event without modifying the core logic.
  */
 const callbacks = {
-  "pull_request.opened": [(context: Context<"pull_request.opened">) => new PullReviewer(context).performPullPrecheck()],
-  "pull_request.ready_for_review": [(context: Context<"pull_request.ready_for_review">) => new PullReviewer(context).performPullPrecheck()],
+  "pull_request.opened": [(context: Context) => new PullReviewer(context).performPullPrecheck()],
+  "pull_request.ready_for_review": [(context: Context) => new PullReviewer(context).performPullPrecheck()],
+  "pull_request.reopened": [(context: Context) => new PullReviewer(context).performPullPrecheck()],
+  "pull_request.edited": [(context: Context<"pull_request.edited">) => handlePullRequestEditedEvent(context)],
   "issue_comment.created": [autofixHandler],
 } as ProxyCallbacks;
 

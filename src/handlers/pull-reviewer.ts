@@ -1,6 +1,6 @@
 import { createPullSpecContextBlockSection } from "../helpers/format-spec-and-pull";
 import { fetchIssue } from "../helpers/issue-fetching";
-import { CodeReviewStatus } from "../types/github-types";
+import { CodeReviewStatus, Issue } from "../types/github-types";
 import { findGroundTruths } from "./ground-truths/find-ground-truths";
 import { Context } from "../types";
 import { CallbackResult } from "../types/proxy";
@@ -14,7 +14,7 @@ export class PullReviewer {
   readonly context: Context<"pull_request.opened" | "pull_request.ready_for_review">;
   private _oneDay = 24 * 60 * 60 * 1000;
 
-  constructor(context: Context<"pull_request.opened" | "pull_request.ready_for_review">) {
+  constructor(context: Context) {
     this.context = context;
   }
 
@@ -33,7 +33,7 @@ export class PullReviewer {
       return { status: 200, reason: logger.info("PR is closed, no action required").logMessage.raw };
     } else if (!(await this.canPerformReview())) {
       return { status: 200, reason: logger.info("Cannot perform review at this time").logMessage.raw };
-    } else if (pull_request.user.id !== this.context.payload.sender.id) {
+    } else if (this.context.payload.sender && pull_request.user.id !== this.context.payload.sender.id) {
       return { status: 200, reason: logger.info("Review wasn't requested by pull author").logMessage.raw };
     } else if (pull_request.author_association === "COLLABORATOR") {
       return { status: 200, reason: logger.info("Review was requested by core team, Skipping").logMessage.raw };
@@ -48,8 +48,11 @@ export class PullReviewer {
    */
   private async _handleCodeReview(): Promise<CallbackResult> {
     const pullReviewData = await this.reviewPull();
-    const { reviewComment, confidenceThreshold } = this.validateReviewOutput(pullReviewData.answer);
+    if (!pullReviewData) {
+      return { status: 200, reason: "Pull review data not found, Skipping automated review" };
+    }
 
+    const { reviewComment, confidenceThreshold } = this.validateReviewOutput(pullReviewData.answer);
     if (confidenceThreshold > 0.5) {
       await this.addThumbsUpReaction();
     } else {
@@ -57,7 +60,6 @@ export class PullReviewer {
       await this.removeThumbsUpReaction();
       await this.submitCodeReview(reviewComment, "REQUEST_CHANGES");
     }
-
     return { status: 200, reason: "Success" };
   }
 
@@ -116,7 +118,7 @@ export class PullReviewer {
     const { number, organization, repository, action, sender } = payload;
     const { owner, name } = repository;
 
-    logger.info(`${organization}/${repository}#${number} - ${action} - ${sender.login} - ${review}`);
+    logger.info(`${organization}/${repository}#${number} - ${action} - ${sender?.login} - ${review}`);
 
     try {
       const response = await this.context.octokit.rest.pulls.createReview({
@@ -210,21 +212,32 @@ export class PullReviewer {
       },
     } = this.context;
 
-    const taskNumber = await this.getTaskNumberFromPullRequest(this.context);
-    const issue = await fetchIssue(this.context, taskNumber);
+    const taskNumbers = await this.getTaskNumberFromPullRequest(this.context);
+    if (!taskNumbers) return null;
 
-    if (!issue) {
+    const issues = (await Promise.all(
+      taskNumbers.map(async (taskNumber) => {
+        return await fetchIssue(this.context, taskNumber);
+      })
+    )) as Issue[];
+
+    if (issues.some((issue) => !issue) || !issues) {
       throw this.context.logger.error(`Error fetching issue, Aborting`, {
         owner: this.context.payload.repository.owner.login,
         repo: this.context.payload.repository.name,
-        issue_number: taskNumber,
+        issue_number: taskNumbers,
       });
     }
 
-    const taskSpecification = issue.body;
-    if (!taskSpecification) throw this.context.logger.error("This task does not contain a specification and this cannot be automatically reviewed");
+    const taskSpecifications: string[] = [];
+    issues.forEach((issue) => {
+      if (!issue?.body) {
+        throw this.context.logger.error(`Task #${issue?.number} does not contain a specification and this cannot be automatically reviewed`);
+      }
+      taskSpecifications.push(issue.body);
+    });
 
-    const groundTruths = await findGroundTruths(this.context, { taskSpecification });
+    const groundTruths = await findGroundTruths(this.context, { taskSpecifications });
 
     const sysPromptTokenCount = (await encodeAsync(createCodeReviewSysMsg(groundTruths, UBIQUITY_OS_APP_NAME, ""))).length;
     const queryTokenCount = (await encodeAsync(llmQuery)).length;
@@ -242,7 +255,7 @@ export class PullReviewer {
     const formattedSpecAndPull = await createPullSpecContextBlockSection({
       context: this.context,
       tokenLimits,
-      issue,
+      issues,
     });
 
     return await completions.createCompletion(
@@ -301,11 +314,10 @@ export class PullReviewer {
       };
     }
   }
-  async getTaskNumberFromPullRequest(context: Context<"pull_request.opened" | "pull_request.ready_for_review">) {
+  async getTaskNumberFromPullRequest(context: Context) {
     const {
       payload: { pull_request },
     } = context;
-    let issueNumber;
 
     const { issues: closingIssues } = await this.checkIfPrClosesIssues(context.octokit, {
       owner: pull_request.base.repo.owner.login,
@@ -314,22 +326,15 @@ export class PullReviewer {
     });
 
     if (closingIssues.length === 0) {
-      await this.convertPullToDraft();
-      throw this.context.logger.error("You need to link an issue before converting the pull request to ready for review.");
-    } else if (closingIssues.length > 1) {
-      throw this.context.logger.error("Multiple tasks are linked to this pull request. This needs to be investigated to determine the best way to handle it.", {
-        closingIssues,
-        pull_request,
-      });
-    } else {
-      issueNumber = closingIssues[0].number;
+      this.context.logger.info("You need to link an issue before converting the pull request to ready for review.");
+      return null;
     }
 
-    if (!issueNumber) {
+    if (!closingIssues.every((issue) => issue.number)) {
       throw this.context.logger.error("Task number not found", { pull_request });
     }
 
-    return issueNumber;
+    return closingIssues.map((issue) => issue.number);
   }
 
   validateReviewOutput(reviewString: string) {

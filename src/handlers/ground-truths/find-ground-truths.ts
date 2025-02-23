@@ -5,8 +5,8 @@ import { createGroundTruthSysMsg } from "./create-system-message";
 
 export async function findGroundTruths(context: Context, params: CodeReviewAppParams): Promise<string[]> {
   const systemMsgObj = CODE_REVIEW_GROUND_TRUTHS_SYSTEM_MESSAGE;
-  const { taskSpecification } = params;
-  return findCodeReviewTruths(context, { taskSpecification }, systemMsgObj);
+  const { taskSpecifications } = params;
+  return findCodeReviewTruths(context, { taskSpecifications }, systemMsgObj);
 }
 
 async function findCodeReviewTruths(context: Context, params: CodeReviewAppParams, systemMsgObj: CodeReviewGroundTruthSystemMessage): Promise<string[]> {
@@ -17,7 +17,7 @@ async function findCodeReviewTruths(context: Context, params: CodeReviewAppParam
   } = context;
   const systemMsg = createGroundTruthSysMsg(systemMsgObj);
 
-  const truths = await completions.createGroundTruthCompletion(context, params.taskSpecification, systemMsg);
+  const truths = await completions.createGroundTruthCompletion(context, params.taskSpecifications, systemMsg);
   return validateGroundTruths(truths, context.logger);
 }
 
