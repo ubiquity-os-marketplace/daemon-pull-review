@@ -26,7 +26,7 @@ export async function handlePullRequestEditedEvent(context: Context<"pull_reques
 
   // Find matches in both the old and new bodies
   const oldLinkedIssues = extractIssueUrls(oldBody, context.payload.repository.full_name);
-  const newLinkedIssues = new Set((await getLinkedIssues(context)).map((issue: ClosedByPullRequestsReferences) => issue.node.url));
+  const newLinkedIssues: Set<string> = new Set((await getLinkedIssues(context)).map((issue: ClosedByPullRequestsReferences) => issue.node.url));
 
   if ((newLinkedIssues.size !== 0 && newLinkedIssues.size !== oldLinkedIssues.size) || [...newLinkedIssues].some((url) => !oldLinkedIssues.has(url))) {
     logger.info("Pull request body edit detected", {
