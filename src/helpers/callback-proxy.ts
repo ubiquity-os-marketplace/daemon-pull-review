@@ -4,7 +4,9 @@ import { PullReviewer } from "../handlers/pull-reviewer";
 import { Context, SupportedEvents } from "../types";
 import { CallbackResult, ProxyCallbacks } from "../types/proxy";
 
-async function prepullCheck(context: Context<"pull_request.reopened" | "pull_request.opened" | "pull_request.ready_for_review" | "pull_request.edited">): Promise<CallbackResult> {
+async function performPullPrecheck(
+  context: Context<"pull_request.reopened" | "pull_request.opened" | "pull_request.ready_for_review" | "pull_request.edited">
+): Promise<CallbackResult> {
   return new PullReviewer(context).performPullPrecheck();
 }
 
@@ -16,9 +18,9 @@ async function prepullCheck(context: Context<"pull_request.reopened" | "pull_req
  * us to add more callbacks for a particular event without modifying the core logic.
  */
 const callbacks = {
-  "pull_request.opened": [prepullCheck],
-  "pull_request.ready_for_review": [prepullCheck],
-  "pull_request.reopened": [prepullCheck],
+  "pull_request.opened": [performPullPrecheck],
+  "pull_request.ready_for_review": [performPullPrecheck],
+  "pull_request.reopened": [performPullPrecheck],
   "pull_request.edited": [handlePullRequestEditedEvent],
   "issue_comment.created": [autofixHandler],
 } as ProxyCallbacks;

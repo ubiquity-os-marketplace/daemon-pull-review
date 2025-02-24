@@ -63,8 +63,8 @@ export class AutofixAgent {
         {
           role: "user",
           content: `# Task Specification\n\n${bugReport.taskSpecification}\n\n# Pull Request Diff\n\n${bugReport.prDiff}\n\n# Comments\n\n${bugReport.comments
-            .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            .map((comment: any) => `${JSON.stringify(comment, null, 2)}\n`)
+            .sort((a: { created_at: string }, b: { created_at: string }) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            .map((comment: unknown) => `${JSON.stringify(comment, null, 2)}\n`)
             .join("\n")}`,
         },
       ],

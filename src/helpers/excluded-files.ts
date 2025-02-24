@@ -33,7 +33,9 @@ async function parseGitAttributes(content: string): Promise<GitAttributes[]> {
     .filter((item): item is GitAttributes => item !== null);
 }
 
-export async function getExcludedFiles(context: Context<"pull_request.edited" | "pull_request.opened" | "pull_request.reopened" | "pull_request.ready_for_review">): Promise<string[]> {
+export async function getExcludedFiles(
+  context: Context<"pull_request.edited" | "pull_request.opened" | "pull_request.reopened" | "pull_request.ready_for_review">
+): Promise<string[]> {
   const [gitIgnoreContent, gitAttributesContent] = await Promise.all([getFileContent(context, ".gitignore"), getFileContent(context, ".gitattributes")]);
 
   const gitAttributesLinguistGenerated = gitAttributesContent
@@ -43,7 +45,10 @@ export async function getExcludedFiles(context: Context<"pull_request.edited" | 
   return [...gitAttributesLinguistGenerated, ...gitIgnoreExcludedFiles];
 }
 
-async function getFileContent(context: Context<"pull_request.edited" | "pull_request.opened" | "pull_request.reopened" | "pull_request.ready_for_review">, path: string): Promise<string | null> {
+async function getFileContent(
+  context: Context<"pull_request.edited" | "pull_request.opened" | "pull_request.reopened" | "pull_request.ready_for_review">,
+  path: string
+): Promise<string | null> {
   try {
     const response = await context.octokit.rest.repos.getContent({
       owner: context.payload.repository.owner.login,

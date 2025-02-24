@@ -2,7 +2,7 @@ import { getLinkedIssues } from "../helpers/gql-queries";
 import { Context } from "../types";
 import { CallbackResult } from "../types/proxy";
 import { PullReviewer } from "./pull-reviewer";
-import { ClosedByPullRequestsReferences, IssuesClosedByThisPr } from "../helpers/gql-queries";
+import { ClosedByPullRequestsReferences } from "../helpers/gql-queries";
 
 /**
  * Handler for the `pull_request.edited` webhook event.

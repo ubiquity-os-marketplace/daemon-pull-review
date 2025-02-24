@@ -40,7 +40,9 @@ export const closedByPullRequestsReferences = /* GraphQL */ `
   }
 `;
 
-export async function getLinkedIssues(context: Context<"pull_request.edited" | "pull_request.opened" | "pull_request.reopened" | "pull_request.ready_for_review">) {
+export async function getLinkedIssues(
+  context: Context<"pull_request.edited" | "pull_request.opened" | "pull_request.reopened" | "pull_request.ready_for_review">
+) {
   const prNumber = context.payload.pull_request.number;
 
   const response = await context.octokit.graphql<IssuesClosedByThisPr>(closedByPullRequestsReferences, {

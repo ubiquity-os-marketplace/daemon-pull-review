@@ -343,7 +343,7 @@ export const TOOL_METHODS = {
       filePath: string;
     },
     context: Context,
-    agent: AutofixAgent
+    _agent: AutofixAgent
   ) {
     let fileSha: string;
 
@@ -397,7 +397,7 @@ export const TOOL_METHODS = {
       body: string;
     },
     context: Context,
-    agent: AutofixAgent
+    _agent: AutofixAgent
   ) {
     try {
       context.logger.info("commentOnPull", { owner, repo, issueNumber, body });
@@ -427,7 +427,7 @@ export const TOOL_METHODS = {
       body: string;
     },
     context: Context,
-    agent: AutofixAgent
+    _agent: AutofixAgent
   ) {
     try {
       context.logger.info("updatePullBody", { owner, repo, pullNumber, body });
@@ -457,7 +457,7 @@ export const TOOL_METHODS = {
       reviewers: string[];
     },
     context: Context,
-    agent: AutofixAgent
+    _agent: AutofixAgent
   ) {
     context.logger.info("requestReview", { owner, repo, pullNumber, reviewers });
     try {
@@ -487,7 +487,7 @@ export const TOOL_METHODS = {
       mergeMethod: "merge" | "squash" | "rebase";
     },
     context: Context,
-    agent: AutofixAgent
+    _agent: AutofixAgent
   ) {
     try {
       context.logger.info("mergePull", { owner, repo, pullNumber, mergeMethod });
@@ -513,7 +513,7 @@ export const TOOL_METHODS = {
       type: "path" | "filename" | "regex";
     },
     context: Context,
-    agent: AutofixAgent
+    _agent: AutofixAgent
   ) {
     try {
       context.logger.info("searchCodebase", { query, type });

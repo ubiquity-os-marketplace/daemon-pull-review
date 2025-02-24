@@ -48,7 +48,7 @@ export class CodebasePrimer {
    * Will clone the repository using `git clone` command
    */
   private async _cloneRepo(repoUrl: string): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<void>((resolve) => {
       this.logger.info("Cloning repository...");
       execSync(`git clone --branch ${this.branch} ${repoUrl} "../repo-clone"`, { stdio: "inherit" });
       resolve();

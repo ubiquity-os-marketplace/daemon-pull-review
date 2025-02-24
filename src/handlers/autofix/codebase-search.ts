@@ -2,6 +2,8 @@ import * as fs from "fs";
 import * as path from "path";
 import { Context } from "../../types";
 
+const REPO_CLONE = "../repo-clone";
+
 export class CodebaseSearch {
   octokit: Context["octokit"];
   logger: Context["logger"];
@@ -25,7 +27,7 @@ export class CodebaseSearch {
 
   private async _searchCodebaseByPath(query: string): Promise<string[]> {
     const results: string[] = [];
-    const baseDir = path.resolve(process.cwd(), "../repo-clone");
+    const baseDir = path.resolve(process.cwd(), REPO_CLONE);
     const walkDir = (dir: string) => {
       const files = fs.readdirSync(dir);
       for (const file of files) {
@@ -44,7 +46,7 @@ export class CodebaseSearch {
 
   private async _searchCodebaseByFileName(query: string): Promise<string[]> {
     const results: string[] = [];
-    const baseDir = path.resolve(process.cwd(), "../repo-clone");
+    const baseDir = path.resolve(process.cwd(), REPO_CLONE);
     const walkDir = (dir: string) => {
       const files = fs.readdirSync(dir);
       for (const file of files) {
@@ -63,7 +65,7 @@ export class CodebaseSearch {
 
   private async _searchCodebaseByRegex(query: string): Promise<string[]> {
     const results: string[] = [];
-    const baseDir = path.resolve(process.cwd(), "../repo-clone");
+    const baseDir = path.resolve(process.cwd(), REPO_CLONE);
     const regex = new RegExp(query, "g");
     const walkDir = (dir: string) => {
       const files = fs.readdirSync(dir);
@@ -85,7 +87,7 @@ export class CodebaseSearch {
   }
 
   async _getFileContent(filePaths: string[]): Promise<string> {
-    const baseDir = path.resolve(process.cwd(), "../repo-clone");
+    const baseDir = path.resolve(process.cwd(), REPO_CLONE);
     const contents: string[] = [];
     for (const filePath of filePaths) {
       const content = fs.readFileSync(path.join(baseDir, filePath), "utf-8");
