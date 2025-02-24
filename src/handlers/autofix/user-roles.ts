@@ -5,7 +5,9 @@ export async function getUserRole(context: Context, user: string) {
   const {
     logger,
     octokit,
-    config: { commentWeights },
+    config: {
+      autofix: { commentWeights },
+    },
   } = context;
 
   const lowestWeight = Math.min(...Object.values(commentWeights));

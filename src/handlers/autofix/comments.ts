@@ -80,7 +80,7 @@ async function getComments(context: Context<"issue_comment.created">, task: Task
     userRoles[user] = await getUserRole(context, user);
   }
 
-  const weightingInterval = context.config.commentWeightInterval;
+  const weightingInterval = context.config.autofix.commentGroupingPeriod;
 
   return allComments
     .map((comment) => {
