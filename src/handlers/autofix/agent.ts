@@ -12,7 +12,7 @@ import { ChatCompletionCreateParamsNonStreaming } from "openai/resources";
 import { Context } from "../../types";
 import { CodebasePrimer } from "./codebase-primer";
 import { CodebaseSearch } from "./codebase-search";
-import { AutoFixComment, ConversationBugDeduction } from "./comments";
+import { AutoFixComment, getTaskData } from "./comments";
 import { TOOLS } from "./autofix-tools";
 import { processLlmResponseWithTools } from "../../helpers/process-llm-response";
 import { PROMPTS } from "../prompt";
@@ -23,7 +23,6 @@ export class AutofixAgent {
 
   codebasePrimer: CodebasePrimer | null = null;
   codebaseSearch: CodebaseSearch;
-  conversationBugDeduction: ConversationBugDeduction;
 
   forkedRepoUrl: string | null = null;
   forkedRepoBranch: string | null = null;
@@ -34,7 +33,6 @@ export class AutofixAgent {
     this.context = context;
     this.logger = context.logger;
     this.codebaseSearch = new CodebaseSearch(context);
-    this.conversationBugDeduction = new ConversationBugDeduction(context);
   }
 
   /**
@@ -46,16 +44,12 @@ export class AutofixAgent {
   async startAgent() {
     await this.initialize();
 
-    const data = await this.conversationBugDeduction.getBugsFromConversation(false);
+    const data = await getTaskData(this.context);
     if (!data) {
       throw this.logger.error("No data found for bug deduction");
     }
 
-    if ("comments" in data) {
-      return await this.fixBugs(data);
-    } else {
-      throw this.logger.error("Unexpected data found for bug deduction in conversation");
-    }
+    return await this.fixBugs(data);
   }
 
   async fixBugs(bugReport: { comments: AutoFixComment[]; prDiff: string; taskSpecification: string }) {
