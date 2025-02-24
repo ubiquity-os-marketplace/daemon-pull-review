@@ -1,6 +1,12 @@
 import { Context } from "../../types";
 
 export async function getUserRole(context: Context, user: string) {
+  if (user.includes("[bot]")) {
+    return {
+      role: "bot",
+      weight: 0,
+    };
+  }
   const orgLogin = context.payload.organization?.login;
   const {
     logger,
