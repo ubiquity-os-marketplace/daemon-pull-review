@@ -1,7 +1,6 @@
 import { Context } from "../types";
 
 export async function findTask(context: Context<"issue_comment.created">) {
-  // need to get the author of the task
   const issue = await context.octokit.rest.issues.get({
     owner: context.payload.repository.owner.login,
     repo: context.payload.repository.name,
@@ -10,11 +9,13 @@ export async function findTask(context: Context<"issue_comment.created">) {
 
   const isPr = "pull_request" in issue.data;
 
-  // if its a PR we want the author of the task, not the PR author
-
   if (!isPr) {
     return issue.data;
   }
+
+  const noSpecResponse = {
+    body: "No task specification found",
+  };
 
   const pr = await context.octokit.rest.pulls.get({
     owner: context.payload.repository.owner.login,
@@ -22,22 +23,16 @@ export async function findTask(context: Context<"issue_comment.created">) {
     pull_number: context.payload.issue.number,
   });
 
-  if (!pr.data.body) {
-    console.log("No body found for PR, could not map Author to UbiquityOS", {
-      url: pr.data.html_url,
-    });
-    return;
-  }
-
   // we need to track the task which this PR is going to close
-  const hashMatch = pr.data.body.match(/#(\d+)/);
-  const urlMatch = pr.data.body.match(/https:\/\/github.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/);
+  const hashMatch = pr.data.body?.match(/#(\d+)/);
+  const urlMatch = pr.data.body?.match(/https:\/\/github.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/);
 
   if (!hashMatch && !urlMatch) {
-    console.log("No task reference found in PR body, could not map Author to UbiquityOS", {
+    context.logger.error("No task reference found in PR body", {
       url: pr.data.html_url,
     });
-    return;
+
+    return noSpecResponse;
   }
 
   let taskNumber;
@@ -46,7 +41,7 @@ export async function findTask(context: Context<"issue_comment.created">) {
   if (hashMatch) {
     taskNumber = parseInt(hashMatch[1]);
     if (!taskNumber) {
-      console.log("No task number found in PR body, could not map Author to UbiquityOS", {
+      context.logger.error("No task number found in PR body", {
         url: pr.data.html_url,
       });
       return;
@@ -60,7 +55,7 @@ export async function findTask(context: Context<"issue_comment.created">) {
     // this could be cross repo, cross org, etc
     taskNumber = parseInt(urlMatch[3]);
     if (!taskNumber) {
-      console.log("No task number found in PR body, could not map Author to UbiquityOS", {
+      context.logger.error("No task number found in PR body", {
         url: pr.data.html_url,
       });
       return;
@@ -72,10 +67,10 @@ export async function findTask(context: Context<"issue_comment.created">) {
       issueNumber: taskNumber,
     };
   } else {
-    console.log("No task reference found in PR body, could not map Author to UbiquityOS", {
+    context.logger.error("No task reference found in PR body", {
       url: pr.data.html_url,
     });
-    return;
+    return noSpecResponse;
   }
 
   const task = await context.octokit.rest.issues.get({
@@ -83,13 +78,6 @@ export async function findTask(context: Context<"issue_comment.created">) {
     repo: taskFetchCtx.repo,
     issue_number: taskFetchCtx.issueNumber,
   });
-
-  if (!task.data.user) {
-    console.log("No task author found for issue", {
-      url: task.data.html_url,
-    });
-    return;
-  }
 
   return task.data;
 }

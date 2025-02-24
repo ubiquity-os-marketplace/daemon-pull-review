@@ -6,14 +6,13 @@
  * - Then it pulls the base branch of the repository
  * - It is then allowed to index the codebase and apply the necessary changes
  * - Finally it creates a new pull request with the changes
- *
  */
 
 import { ChatCompletionCreateParamsNonStreaming } from "openai/resources";
 import { Context } from "../../types";
 import { CodebasePrimer } from "./codebase-primer";
 import { CodebaseSearch } from "./codebase-search";
-import { ConversationBugDeduction } from "./comments";
+import { AutoFixComment, ConversationBugDeduction } from "./comments";
 import { TOOLS } from "./autofix-tools";
 import { processLlmResponseWithTools } from "../../helpers/process-llm-response";
 import { PROMPTS } from "../prompt";
@@ -41,7 +40,7 @@ export class AutofixAgent {
   /**
    * Starts the Autofix Agent
    * - Deduces the bugs from the conversation
-   * - Gives the bug report to the LLM to use for fixing
+   * - Gives the bug report to the agent alongside
    * - The LLM will begin searching the codebase for the bugs
    */
   async startAgent() {
@@ -59,7 +58,7 @@ export class AutofixAgent {
     }
   }
 
-  async fixBugs(bugReport: any) {
+  async fixBugs(bugReport: { comments: AutoFixComment[]; prDiff: string; taskSpecification: string }) {
     let { messages, res } = await this.messageLlm({
       model: this.context.config.openRouterAiModel,
       messages: [
@@ -69,7 +68,7 @@ export class AutofixAgent {
         },
         {
           role: "user",
-          content: `# Task Specification\n\n${bugReport.taskSpec}\n\n# Pull Request Diff\n\n${bugReport.prDiff}\n\n# Comments\n\n${bugReport.comments
+          content: `# Task Specification\n\n${bugReport.taskSpecification}\n\n# Pull Request Diff\n\n${bugReport.prDiff}\n\n# Comments\n\n${bugReport.comments
             .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
             .map((comment: any) => `${JSON.stringify(comment, null, 2)}\n`)
             .join("\n")}`,

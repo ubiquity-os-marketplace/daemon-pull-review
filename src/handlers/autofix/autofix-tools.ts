@@ -1,8 +1,8 @@
+import * as fs from "fs";
+import * as path from "path";
 import { ChatCompletionTool } from "openai/resources";
 import { Context } from "../../types";
 import { CodebaseSearch } from "./codebase-search";
-import * as fs from "fs";
-import * as path from "path";
 import { AutofixAgent } from "./agent";
 
 type ToolMethods_ = typeof TOOL_METHODS;
@@ -128,34 +128,6 @@ export const TOOLS: ChatCompletionTool[] = [
       strict: true,
     },
   },
-  // {
-  //   type: "function",
-  //   function: {
-  //     name: "mergePull",
-  //     description: "Merges the given Pull",
-  //     parameters: {
-  //       type: "object",
-  //       properties: {
-  //         owner: {
-  //           type: "string",
-  //         },
-  //         repo: {
-  //           type: "string",
-  //         },
-  //         pullNumber: {
-  //           type: "number",
-  //         },
-  //         mergeMethod: {
-  //           type: "string",
-  //           enum: ["merge", "squash", "rebase"],
-  //         },
-  //       },
-  //       required: ["owner", "repo", "pullNumber", "mergeMethod"],
-  //       additionalProperties: false,
-  //     },
-  //     strict: true,
-  //   },
-  // },
   {
     type: "function",
     function: {
@@ -220,27 +192,6 @@ export const TOOLS: ChatCompletionTool[] = [
       strict: true,
     },
   },
-  // {
-  //   type: "function",
-  //   function: {
-  //     name: "commitWorkspace",
-  //     description: "Commits all changes in the workspace to the given branch using Git add, commit and push",
-  //     parameters: {
-  //       type: "object",
-  //       properties: {
-  //         branch: {
-  //           type: "string",
-  //         },
-  //         message: {
-  //           type: "string",
-  //         },
-  //       },
-  //       required: ["branch", "message"],
-  //       additionalProperties: false,
-  //     },
-  //     strict: true,
-  //   },
-  // },
   {
     type: "function",
     function: {
@@ -300,10 +251,6 @@ export const TOOLS: ChatCompletionTool[] = [
   },
 ];
 
-// async function execSyncDispatch(command: string, options: any) {
-//   return execSync(command, options);
-// }
-
 export const TOOL_METHODS = {
   openPull: async function openPull(
     {
@@ -323,7 +270,7 @@ export const TOOL_METHODS = {
     agent: AutofixAgent
   ) {
     try {
-      console.log("openPull", owner, repo, title, body);
+      context.logger.info("openPull", { owner, repo, title, body, head });
       const res = await context.octokit.rest.pulls.create({
         owner: context.payload.repository.owner.login,
         repo,
@@ -365,7 +312,7 @@ export const TOOL_METHODS = {
     }
 
     try {
-      console.log("createBranch", owner, repo, branchName);
+      context.logger.info("createBranch", { owner, repo, branchName });
       const res = await context.octokit.rest.git.createRef({
         owner: context.payload.repository.owner.login,
         repo,
@@ -379,48 +326,6 @@ export const TOOL_METHODS = {
       return String(error);
     }
   },
-  // commitWorkspace: async function commitWorkspace(
-  //   {
-  //     branch,
-  //     message,
-  //   }: {
-  //     branch: string;
-  //     message: string;
-  //   },
-  //   context: Context,
-  //   agent: AutofixAgent
-  // ) {
-  //   try {
-  //     const baseDir = path.resolve(process.cwd(), "../repo-clone");
-  //     const isRepo = fs.existsSync(path.join(baseDir, ".git"));
-  //     if (!isRepo) {
-  //       await execSyncDispatch(`git init`, { cwd: baseDir });
-  //     }
-
-  //     const remoteUrl = agent?.forkedRepoUrl || context.payload.repository.clone_url;
-
-  //     try {
-  //       await execSyncDispatch(`git remote add origin ${remoteUrl}`, { cwd: baseDir });
-  //     } catch {
-  //       await execSyncDispatch(`git remote set-url origin ${remoteUrl}`, { cwd: baseDir });
-  //     }
-
-  //     try {
-  //       await execSyncDispatch(`git rev-parse --verify ${branch}`, { cwd: baseDir });
-  //       await execSyncDispatch(`git checkout ${branch}`, { cwd: baseDir });
-  //     } catch {
-  //       await execSyncDispatch(`git checkout -b ${branch}`, { cwd: baseDir });
-  //     }
-
-  //     await execSyncDispatch(`git add .`, { cwd: baseDir });
-  //     await execSyncDispatch(`git pull origin ${branch}`, { cwd: baseDir });
-  //     await execSyncDispatch(`git commit -m "${message}"`, { cwd: baseDir });
-  //     await execSyncDispatch(`gh repo sync --branch ${branch} --force`, { cwd: baseDir });
-  //   } catch (error) {
-  //     context.logger.error(String(error));
-  //     return String(error);
-  //   }
-  // },
   commitSingleFile: async function commitSingleFile(
     {
       owner,
@@ -461,7 +366,7 @@ export const TOOL_METHODS = {
     }
 
     try {
-      console.log("createCommit", owner, repo, branch, message, content);
+      context.logger.info("createCommit", { owner, repo, branch, message, content });
       const res = await context.octokit.rest.repos.createOrUpdateFileContents({
         /** */
         owner: context.payload.repository.owner.login,
@@ -495,7 +400,7 @@ export const TOOL_METHODS = {
     agent: AutofixAgent
   ) {
     try {
-      console.log("commentOnPull", owner, repo, issueNumber, body);
+      context.logger.info("commentOnPull", { owner, repo, issueNumber, body });
       const res = await context.octokit.rest.issues.createComment({
         owner: context.payload.repository.owner.login,
         repo,
@@ -525,7 +430,7 @@ export const TOOL_METHODS = {
     agent: AutofixAgent
   ) {
     try {
-      console.log("updatePullBody", owner, repo, pullNumber, body);
+      context.logger.info("updatePullBody", { owner, repo, pullNumber, body });
       const res = await context.octokit.rest.pulls.update({
         owner: context.payload.repository.owner.login,
         repo,
@@ -554,7 +459,7 @@ export const TOOL_METHODS = {
     context: Context,
     agent: AutofixAgent
   ) {
-    console.log("requestReview", owner, repo, pullNumber, reviewers);
+    context.logger.info("requestReview", { owner, repo, pullNumber, reviewers });
     try {
       const res = await context.octokit.rest.pulls.requestReviewers({
         owner: context.payload.repository.owner.login,
@@ -585,7 +490,7 @@ export const TOOL_METHODS = {
     agent: AutofixAgent
   ) {
     try {
-      console.log("mergePull", owner, repo, pullNumber, mergeMethod);
+      context.logger.info("mergePull", { owner, repo, pullNumber, mergeMethod });
       const res = await context.octokit.rest.pulls.merge({
         owner: context.payload.repository.owner.login,
         repo,
@@ -611,7 +516,7 @@ export const TOOL_METHODS = {
     agent: AutofixAgent
   ) {
     try {
-      console.log("searchCodebase", query, type);
+      context.logger.info("searchCodebase", { query, type });
       const codebaseSearch = new CodebaseSearch(context);
       return (await codebaseSearch.searchCodebase(query, type)).join("\n");
     } catch (error) {
@@ -620,7 +525,7 @@ export const TOOL_METHODS = {
     }
   },
   getFileContent: async function getFileContent({ filePaths }: { filePaths: string[] }, context: Context) {
-    console.log("getFileContent", filePaths);
+    context.logger.info("getFileContent", { filePaths });
     try {
       const baseDir = path.resolve(process.cwd(), "../repo-clone");
       const results: string[] = [];
@@ -635,8 +540,8 @@ export const TOOL_METHODS = {
       return String(error);
     }
   },
-  updateFileContent: async function updateFileContent({ filePath, content }: { filePath: string; content: string }) {
-    console.log("updateFileContent", filePath, content);
+  updateFileContent: async function updateFileContent({ filePath, content }: { filePath: string; content: string }, context: Context) {
+    context.logger.info("updateFileContent", { filePath, content });
     try {
       const baseDir = path.resolve(process.cwd(), "../repo-clone");
       fs.writeFileSync(path.join(baseDir, filePath), content, { encoding: "utf-8" });

@@ -2,10 +2,9 @@ import { ChatCompletionCreateParamsNonStreaming } from "openai/resources";
 import { Context } from "../../types";
 import { GROUND_TRUTHS, PROMPTS } from "../prompt";
 import { processLlmResponse } from "../../helpers/process-llm-response";
-import { writeFile } from "fs/promises";
 import { findTask } from "../../helpers/find-task";
 
-type AutoFixComment = {
+export type AutoFixComment = {
   id: number;
   body: string;
   user: string;
@@ -15,9 +14,6 @@ type AutoFixComment = {
 /**
  * Uses the conversation across the PR and issue to deduce the bugs
  * being discussed in the conversation.
- *
- * @TODO Implement weighted scoring for the comments
- * @TODO Implement a way to filter out irrelevant comments, time-based maybe?
  */
 export class ConversationBugDeduction {
   context: Context<"issue_comment.created">;
@@ -51,37 +47,7 @@ export class ConversationBugDeduction {
       ],
     };
 
-    const bugReport = await this.messageLlm(options, GROUND_TRUTHS.bugDeduction.fromSpecAndBugReview);
-
-    await writeFile("bugReport.json", JSON.stringify({ bugReport }, null, 2));
-
-    // const bugReport = await this.messageLlm(options, groundTruths);
-
-    // const diffPrompt = "pullRequestDiffBugDeduction";
-    // const diffGroundTruths = GROUND_TRUTHS.bugDeduction.fromPullRequestDiff;
-    // const diffSysMsg = this.buildSysMessage(diffPrompt, diffGroundTruths);
-
-    // const diffOptions: ChatCompletionCreateParamsNonStreaming = {
-    //     model: openRouterAiModel,
-    //     messages: [
-    //         {
-    //             role: "system",
-    //             content: diffSysMsg
-    //         },
-    //         {
-    //             role: "user",
-    //             content: `# Bug Report\n\n${bugReport}\n\n# PR Diff:\n\n${prDiff}`
-    //         }
-    //     ]
-    // };
-
-    // const diffBugReport = await this.messageLlm(diffOptions, diffGroundTruths);
-
-    // await writeFile("bugReport.json", JSON.stringify({ bugReport, diffBugReport }, null, 2))
-
-    return {
-      bugReport,
-    };
+    return await this.messageLlm(options, GROUND_TRUTHS.bugDeduction.fromSpecAndBugReview);
   }
 
   async getBugsFromConversation(withLlmCall = true) {

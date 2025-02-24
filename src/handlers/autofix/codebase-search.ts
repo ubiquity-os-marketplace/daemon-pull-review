@@ -14,7 +14,6 @@ export class CodebaseSearch {
   }
 
   async searchCodebase(query: string, type: "path" | "filename" | "regex"): Promise<string[]> {
-    console.log("CodebaseSearch.searchCodebase", query, type);
     if (type === "path") {
       return this._searchCodebaseByPath(query);
     } else if (type === "filename") {

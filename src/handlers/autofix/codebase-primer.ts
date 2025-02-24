@@ -1,7 +1,6 @@
 import { exec, execSync } from "child_process";
 import * as fs from "fs";
 import { Context } from "../../types";
-import * as path from "path";
 
 export class CodebasePrimer {
   logger: Context["logger"];
@@ -19,6 +18,9 @@ export class CodebasePrimer {
   /**
    * First checks if the repository is already cloned, if not, it will clone the repository
    * after checking if `git` is installed or not. If not, it will install `git` first.
+   *
+   * This will not work if ran as a Worker because of execSync so if you'd like to
+   * test this locally, you can run this plugin as a script with a minimal context object.
    */
   async pullCodebase() {
     if (!fs.existsSync("../repo-clone")) {
