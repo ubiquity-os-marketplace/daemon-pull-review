@@ -1,6 +1,12 @@
+import { RestEndpointMethodTypes } from "@octokit/rest";
 import { Context } from "../types";
 
-export async function findTask(context: Context<"issue_comment.created">) {
+export type TaskIssue =
+  | RestEndpointMethodTypes["issues"]["get"]["response"]["data"]
+  | RestEndpointMethodTypes["pulls"]["get"]["response"]["data"]
+  | { body?: string; user?: { login: string } };
+
+export async function findTask(context: Context<"issue_comment.created">): Promise<TaskIssue> {
   const issue = await context.octokit.rest.issues.get({
     owner: context.payload.repository.owner.login,
     repo: context.payload.repository.name,
@@ -44,7 +50,7 @@ export async function findTask(context: Context<"issue_comment.created">) {
       context.logger.error("No task number found in PR body", {
         url: pr.data.html_url,
       });
-      return;
+      return noSpecResponse;
     }
     taskFetchCtx ??= {
       owner: context.payload.repository.owner.login,
@@ -58,7 +64,7 @@ export async function findTask(context: Context<"issue_comment.created">) {
       context.logger.error("No task number found in PR body", {
         url: pr.data.html_url,
       });
-      return;
+      return noSpecResponse;
     }
 
     taskFetchCtx ??= {

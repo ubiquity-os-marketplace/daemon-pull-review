@@ -2,7 +2,10 @@ import { ChatCompletionCreateParamsNonStreaming } from "openai/resources";
 import { Context } from "../../types";
 import { GROUND_TRUTHS, PROMPTS } from "../prompt";
 import { processLlmResponse } from "../../helpers/process-llm-response";
-import { findTask } from "../../helpers/find-task";
+import { findTask, TaskIssue } from "../../helpers/find-task";
+import { getUserRole } from "./user-roles";
+import ms from "ms";
+import { RestEndpointMethodTypes } from "@octokit/rest";
 
 export type AutoFixComment = {
   id: number;
@@ -52,7 +55,9 @@ export class ConversationBugDeduction {
 
   async getBugsFromConversation(withLlmCall = true) {
     const { octokit, payload } = this.context;
-    const comments = await this.getComments(octokit, payload);
+    const task = await findTask(this.context);
+    const taskSpecification = task?.body || "No task specification found";
+    const comments = await this.getComments(octokit, payload, task);
     const prDiff = await octokit.rest.pulls.get({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
@@ -61,8 +66,6 @@ export class ConversationBugDeduction {
         format: "diff",
       },
     });
-
-    const taskSpecification = (await findTask(this.context))?.body || "No task specification found";
 
     if (!withLlmCall) {
       return {
@@ -75,7 +78,7 @@ export class ConversationBugDeduction {
     return await this.conversationBugDeduction(comments, prDiff.data as unknown as string, taskSpecification);
   }
 
-  async getComments(octokit: Context["octokit"], payload: Context<"issue_comment.created">["payload"]): Promise<AutoFixComment[]> {
+  async getComments(octokit: Context["octokit"], payload: Context<"issue_comment.created">["payload"], task: TaskIssue): Promise<AutoFixComment[]> {
     const allComments = [];
 
     const issueComments = await octokit.paginate(octokit.rest.issues.listComments, {
@@ -113,6 +116,18 @@ export class ConversationBugDeduction {
     allComments.push(...prComments);
     allComments.push(...reviewComments);
 
+    const users = Array.from(new Set(allComments.map((comment) => comment.user?.login || comment.user?.name).filter((user): user is string => !!user)));
+    const userRoles: Record<string, { role: string; weight: number }> = {};
+
+    userRoles["Unknown"] = { role: "Unknown", weight: 0 };
+    userRoles[task?.user?.login || "Unknown"] = { role: "Author", weight: task?.user?.login ? 1 : 0 };
+
+    for (const user of users) {
+      userRoles[user] = await getUserRole(this.context, user);
+    }
+
+    const weightingInterval = this.context.config.commentWeightInterval;
+
     return allComments
       .map((comment) => {
         if (comment.user?.type === "Bot") {
@@ -120,13 +135,29 @@ export class ConversationBugDeduction {
         }
         return {
           id: comment.id,
-          body: comment.body || "No body",
-          user: comment.user?.login || comment.user?.name || "Unknown",
+          weight: userRoles[comment.user?.login || comment.user?.name || "Unknown"]?.weight || 0,
           created_at: comment.created_at,
+          user: comment.user?.login || comment.user?.name || "Unknown",
+          body: comment.body || "No body",
         };
       })
       .filter((comment): comment is Exclude<typeof comment, undefined> => !!comment)
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      .sort((a, b) => {
+        const dateA = ms(a.created_at as unknown as number) as unknown as number;
+        const dateB = ms(b.created_at as unknown as number) as unknown as number;
+        const groupA = this.getTimeGroupingInterval(dateA, weightingInterval);
+        const groupB = this.getTimeGroupingInterval(dateB, weightingInterval);
+
+        if (groupA === groupB) {
+          return b.weight - a.weight;
+        }
+
+        return groupA - groupB;
+      });
+  }
+
+  getTimeGroupingInterval(time: number, interval: number) {
+    return Math.floor(time / interval);
   }
 
   buildSysMessage(prompt: keyof typeof PROMPTS, groundTruths: string[]) {
