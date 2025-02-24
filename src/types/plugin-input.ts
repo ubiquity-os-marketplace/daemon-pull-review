@@ -24,7 +24,7 @@ export const pluginSettingsSchema = T.Object(
       T.String({
         default: "1 Day",
         description:
-          "When weighting comments, they are sorted by date first, then by weight if the dates are the same. This setting represents the timespan over which the weight of a comment is considered.",
+          "When weighting comments, they are sorted by date first, then by weight if the dates are the same. This setting represents the timespan over which comments are grouped for weighting. For example, if set to '1 Day', comments from the same user within a 24-hour period will be grouped together and the highest weight will be used for all comments in that group.",
       })
     )
       .Decode((value) => {
