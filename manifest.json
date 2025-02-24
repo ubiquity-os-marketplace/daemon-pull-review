@@ -13,6 +13,34 @@
     "default": {},
     "type": "object",
     "properties": {
+      "autofix": {
+        "default": {},
+        "type": "object",
+        "properties": {
+          "useForkCodebase": {
+            "default": true,
+            "type": "boolean"
+          },
+          "commentWeights": {
+            "default": {
+              "contributor": 0.25,
+              "collaborator": 0.5,
+              "taskAuthor": 1
+            },
+            "type": "object",
+            "patternProperties": {
+              "^(.*)$": {
+                "type": "number"
+              }
+            }
+          },
+          "commentGroupingPeriod": {
+            "default": "1 Day",
+            "description": "When weighting comments, they are sorted by date first, then by weight if the dates are the same. This setting represents the timespan over which comments are grouped for weighting. For example, if set to '1 Day', comments from the same user within a 24-hour period will be grouped together and the highest weight will be used for all comments in that group.",
+            "type": "string"
+          }
+        }
+      },
       "openRouterAiModel": {
         "default": "anthropic/claude-3.5-sonnet",
         "type": "string"
