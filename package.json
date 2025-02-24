@@ -48,6 +48,7 @@
     "@mswjs/data": "^0.16.2",
     "@octokit/rest": "^21.0.2",
     "@types/jest": "^29.5.12",
+    "@types/ms": "^2.1.0",
     "@types/node": "20.14.5",
     "cross-env": "^7.0.3",
     "cspell": "8.9.0",

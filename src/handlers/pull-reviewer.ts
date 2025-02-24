@@ -11,10 +11,10 @@ import { TokenLimits } from "../types/llm";
 import { RestEndpointMethodTypes } from "@octokit/rest";
 
 export class PullReviewer {
-  readonly context: Context<"pull_request.opened" | "pull_request.ready_for_review">;
+  readonly context: Context<"pull_request.opened" | "pull_request.ready_for_review" | "pull_request.edited">;
   private _oneDay = 24 * 60 * 60 * 1000;
 
-  constructor(context: Context) {
+  constructor(context: Context<"pull_request.opened" | "pull_request.ready_for_review" | "pull_request.edited">) {
     this.context = context;
   }
 
@@ -316,7 +316,7 @@ export class PullReviewer {
       };
     }
   }
-  async getTaskNumberFromPullRequest(context: Context) {
+  async getTaskNumberFromPullRequest(context: Context<"pull_request.edited" | "pull_request.opened" | "pull_request.ready_for_review">): Promise<number[] | null> {
     const {
       payload: { pull_request },
     } = context;

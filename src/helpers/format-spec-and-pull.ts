@@ -9,7 +9,7 @@ export async function createPullSpecContextBlockSection({
   tokenLimits,
   issues,
 }: {
-  context: Context;
+  context: Context<"pull_request.edited" | "pull_request.opened" | "pull_request.reopened" | "pull_request.ready_for_review">;
   tokenLimits: TokenLimits;
   issues: Issue[];
 }): Promise<string> {
