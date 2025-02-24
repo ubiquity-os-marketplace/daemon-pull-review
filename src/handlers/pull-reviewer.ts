@@ -11,10 +11,10 @@ import { TokenLimits } from "../types/llm";
 import { RestEndpointMethodTypes } from "@octokit/rest";
 
 export class PullReviewer {
-  readonly context: Context<"pull_request.opened" | "pull_request.ready_for_review" | "pull_request.edited">;
+  readonly context: Context<"pull_request.opened" | "pull_request.reopened" | "pull_request.ready_for_review" | "pull_request.edited">;
   private _oneDay = 24 * 60 * 60 * 1000;
 
-  constructor(context: Context<"pull_request.opened" | "pull_request.ready_for_review" | "pull_request.edited">) {
+  constructor(context: Context<"pull_request.opened" | "pull_request.reopened" | "pull_request.ready_for_review" | "pull_request.edited">) {
     this.context = context;
   }
 
@@ -316,7 +316,7 @@ export class PullReviewer {
       };
     }
   }
-  async getTaskNumberFromPullRequest(context: Context<"pull_request.edited" | "pull_request.opened" | "pull_request.ready_for_review">): Promise<number[] | null> {
+  async getTaskNumberFromPullRequest(context: Context<"pull_request.opened" | "pull_request.reopened" | "pull_request.ready_for_review" | "pull_request.edited">): Promise<number[] | null> {
     const {
       payload: { pull_request },
     } = context;
@@ -332,11 +332,29 @@ export class PullReviewer {
       return null;
     }
 
-    if (!closingIssues.every((issue) => issue.number)) {
+    if (!closingIssues.every((issue: {
+      number: number;
+      title: string;
+      url: any;
+      body: string;
+      repository: {
+        name: string;
+        owner: string;
+      };
+    }) => issue.number)) {
       throw this.context.logger.error("Task number not found", { pull_request });
     }
 
-    return closingIssues.map((issue) => issue.number);
+    return closingIssues.map((issue: {
+      number: number;
+      title: string;
+      url: any;
+      body: string;
+      repository: {
+        name: string;
+        owner: string;
+      };
+    }) => issue.number);
   }
 
   validateReviewOutput(reviewString: string) {
