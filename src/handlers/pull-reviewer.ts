@@ -8,13 +8,17 @@ import { closedByPullRequestsReferences, IssuesClosedByThisPr } from "../helpers
 import { createCodeReviewSysMsg, llmQuery } from "./prompt";
 import { encodeAsync } from "../helpers/pull-helpers/pull-request-parsing";
 import { TokenLimits } from "../types/llm";
+import ms from "ms";
 
 export class PullReviewer {
   readonly context: Context;
-  private _oneDay = 24 * 60 * 60 * 1000;
+  private _reviewInterval: number | null = null;
 
   constructor(context: Context) {
     this.context = context;
+    if (context.config.reviewInterval) {
+      this._reviewInterval = context.config.reviewInterval;
+    }
   }
 
   /**
@@ -164,12 +168,12 @@ export class PullReviewer {
     const now = new Date();
     const diff = now.getTime() - lastReviewDate.getTime();
 
-    if (diff < this._oneDay) {
+    if (this._reviewInterval && diff < this._reviewInterval) {
       await this.convertPullToDraft();
-      throw this.context.logger.error("Only one review per day is allowed");
+      throw this.context.logger.error(`Review interval not met, skipping review. Last review was ${ms(diff, { long: true })} ago`);
     }
 
-    logger.info("One review per day check passed");
+    logger.info(`Review interval met, proceeding with review. Last review was ${ms(diff, { long: true })} ago`);
     return true;
   }
 

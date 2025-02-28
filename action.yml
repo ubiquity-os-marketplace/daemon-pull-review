@@ -1,5 +1,5 @@
 name: "@ubiquity-os-marketplace/daemon-pull-review"
-description: "Autoamtically reviews pull requests on issues that are ready for review"
+description: "Automatically reviews pull requests on issues that are ready for review"
 
 inputs:
   stateId:

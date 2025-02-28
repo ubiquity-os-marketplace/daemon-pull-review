@@ -11,7 +11,7 @@ import { Octokit } from "@octokit/rest";
 import { CompletionsType } from "../src/adapters/open-router/helpers/completions";
 import pullTemplate from "./__mocks__/pull-template";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
-
+import ms from "ms";
 // Mock constants
 const MOCK_ANSWER_PASSED = `{"confidenceThreshold": 1, "reviewComment": "passed"}`;
 
@@ -93,7 +93,7 @@ describe("Pull Reviewer tests", () => {
 
       await expect(pullReviewer.canPerformReview()).rejects.toMatchObject({
         logMessage: {
-          raw: "Only one review per day is allowed",
+          raw: expect.stringContaining("Review interval not met, skipping review."),
         },
       });
     });
@@ -246,7 +246,15 @@ function createContext() {
     owner: "ubiquity",
     repo: "test-repo",
     logger: logger,
-    config: {},
+    config: {
+      reviewInterval: ms("1 Day"),
+      openRouterAiModel: "anthropic/claude-3.5-sonnet",
+      openRouterBaseUrl: "https://openrouter.ai/api/v1",
+      tokenLimit: {
+        context: 200000,
+        completion: 4096,
+      },
+    },
     env: {
       UBIQUITY_OS_APP_NAME: "UbiquityOS",
       OPENROUTER_API_KEY: "test",
