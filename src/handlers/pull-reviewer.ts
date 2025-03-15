@@ -311,7 +311,7 @@ export class PullReviewer {
       repo: pull_request.base.repo.name,
       pr_number: pull_request.number,
     });
-    logger.info(`Found ${closingIssues.length} linked issues`, { closingIssues });
+    logger.info(`Found ${closingIssues.length} linked issues`, { closingIssues: closingIssues.map((issue) => issue.url) });
 
     if (closingIssues.length === 0) {
       logger.info("You need to link an issue before converting the pull request to ready for review.");
