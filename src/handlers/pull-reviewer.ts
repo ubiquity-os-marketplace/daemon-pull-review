@@ -225,7 +225,7 @@ export class PullReviewer {
 
     issues.forEach((issue) => {
       if (!issue?.body) {
-        throw this.context.logger.error(`Task #${issue?.number} does not contain a specification and this cannot be automatically reviewed`);
+        throw this.context.logger.warn(`Task #${issue?.number} does not contain a specification and this cannot be automatically reviewed`);
       }
       taskSpecifications.push(issue.body);
     });
@@ -260,14 +260,8 @@ export class PullReviewer {
     );
   }
 
-  async checkIfPrClosesIssues(
-    octokit: Context["octokit"],
-    pr: {
-      owner: string;
-      repo: string;
-      pr_number: number;
-    }
-  ) {
+  async checkIfPrClosesIssues(pr: { owner: string; repo: string; pr_number: number }) {
+    const { octokit, logger } = this.context;
     const { owner, repo, pr_number } = pr;
 
     try {
@@ -291,7 +285,7 @@ export class PullReviewer {
         };
       }
     } catch (error) {
-      console.error("Error fetching closing issues:", error);
+      logger.error("Error fetching closing issues:", { error: error instanceof Error ? error : undefined });
       return {
         closesIssues: false,
         issues: [],
@@ -303,10 +297,9 @@ export class PullReviewer {
     const {
       payload: { pull_request },
       logger,
-      octokit,
     } = this.context;
 
-    const { issues: closingIssues } = await this.checkIfPrClosesIssues(octokit, {
+    const { issues: closingIssues } = await this.checkIfPrClosesIssues({
       owner: pull_request.base.repo.owner.login,
       repo: pull_request.base.repo.name,
       pr_number: pull_request.number,
