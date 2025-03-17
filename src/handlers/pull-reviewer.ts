@@ -148,6 +148,7 @@ export class PullReviewer {
 
     logger.info(`${repository.owner.login}/${repository.name}#${number} - ${action}`);
 
+    logger.info(`author_association: ${payload.pull_request.author_association}`);
     if (["OWNER", "MEMBER", "COLLABORATOR"].includes(payload.pull_request.author_association)) {
       return true;
     }
