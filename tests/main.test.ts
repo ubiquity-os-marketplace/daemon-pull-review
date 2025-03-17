@@ -96,6 +96,17 @@ describe("Pull Reviewer tests", () => {
       });
     });
 
+    it("should always allow review if PR author is collaborator/member/owner", async () => {
+      const { PullReviewer } = await import("../src/handlers/pull-reviewer");
+      const context = createContext();
+      context.payload.pull_request.author_association = "MEMBER";
+      const pullReviewer = new PullReviewer(context);
+
+      jest.spyOn(pullReviewer.context.octokit, "paginate").mockResolvedValue([{ user: { type: "Bot" }, submitted_at: new Date().toISOString() }]);
+
+      expect(await pullReviewer.canPerformReview()).toBe(true);
+    });
+
     it("should allow review after 24 hours have passed", async () => {
       const { PullReviewer } = await import("../src/handlers/pull-reviewer");
       const context = createContext();

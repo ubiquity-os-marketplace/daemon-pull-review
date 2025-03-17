@@ -148,6 +148,10 @@ export class PullReviewer {
 
     logger.info(`${repository.owner.login}/${repository.name}#${number} - ${action}`);
 
+    if (["OWNER", "MEMBER", "COLLABORATOR"].includes(payload.pull_request.author_association)) {
+      return true;
+    }
+
     const reviews = await this.context.octokit.paginate(this.context.octokit.rest.pulls.listReviews, {
       owner: owner.login,
       repo: name,
