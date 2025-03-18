@@ -96,13 +96,13 @@ describe("Pull Reviewer tests", () => {
       });
     });
 
-    it("should always allow review if PR author is collaborator/member/owner", async () => {
+    it("should always allow review if PR author is collaborator", async () => {
       const { PullReviewer } = await import("../src/handlers/pull-reviewer");
       const context = createContext();
-      context.payload.pull_request.author_association = "MEMBER";
       const pullReviewer = new PullReviewer(context);
 
       jest.spyOn(pullReviewer.context.octokit, "paginate").mockResolvedValue([{ user: { type: "Bot" }, submitted_at: new Date().toISOString() }]);
+      jest.spyOn(pullReviewer.context.octokit.rest.repos, "checkCollaborator").mockResolvedValue({ status: 204, data: {} as never, url: "", headers: {} });
 
       expect(await pullReviewer.canPerformReview()).toBe(true);
     });

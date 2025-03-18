@@ -138,6 +138,24 @@ export class PullReviewer {
   }
 
   /**
+   * Check if a user is a collaborator
+   * @param username - The username to check
+   * @returns boolean indicating if user is a collaborator
+   */
+  async isUserCollaborator(username: string): Promise<boolean> {
+    try {
+      await this.context.octokit.rest.repos.checkCollaborator({
+        username: username,
+        owner: this.context.payload.repository.owner.login,
+        repo: this.context.payload.repository.name,
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Check if a review can be performed on the pull request
    * @returns boolean indicating if review can be performed
    */
@@ -148,8 +166,8 @@ export class PullReviewer {
 
     logger.info(`${repository.owner.login}/${repository.name}#${number} - ${action}`);
 
-    logger.info(`author_association: ${payload.pull_request.author_association}`);
-    if (["OWNER", "MEMBER", "COLLABORATOR"].includes(payload.pull_request.author_association)) {
+    if (await this.isUserCollaborator(payload.sender?.login ?? "")) {
+      logger.info("User is a collaborator, skipping review interval check, proceeding with review");
       return true;
     }
 
