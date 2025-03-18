@@ -167,7 +167,7 @@ export class PullReviewer {
     logger.info(`${repository.owner.login}/${repository.name}#${number} - ${action}`);
 
     if (payload.sender && (await this.isUserCollaborator(payload.sender.login))) {
-      logger.info("User is a collaborator, skipping review interval check, proceeding with review");
+      logger.info("User is a collaborator, skipping review interval check, proceeding with review", { user: payload.sender.login });
       return true;
     }
 
