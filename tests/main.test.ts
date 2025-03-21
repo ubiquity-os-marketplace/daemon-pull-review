@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { drop } from "@mswjs/data";
-import { Octokit } from "@octokit/rest";
+import { Octokit, RestEndpointMethodTypes } from "@octokit/rest";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import ms from "ms";
 import { CompletionsType } from "../src/adapters/open-router/helpers/completions";
@@ -78,6 +78,57 @@ describe("Pull Reviewer tests", () => {
       const result = await pullReviewer.performPullPrecheck();
       expect(pullReviewer.addThumbsUpReaction).toHaveBeenCalled();
       expect(result).toEqual({ status: 200, reason: "Success" });
+    });
+
+    it("should handle cross-repo linked issue", async () => {
+      const linkedIssue = {
+        number: 1,
+        title: "issue",
+        url: "https://github.com/ubiquity-os-marketplace/daemon-pull-review/issue/1",
+        body: "This is an issue",
+        repository: {
+          name: "daemon-pull-review",
+          owner: {
+            login: "ubiquity-os-marketplace",
+          },
+        },
+      };
+      const { PullReviewer } = await import("../src/handlers/pull-reviewer");
+      const context = createContext();
+      jest.spyOn(context.octokit, "graphql").mockResolvedValue({
+        repository: {
+          pullRequest: {
+            closingIssuesReferences: {
+              edges: [
+                {
+                  node: linkedIssue,
+                },
+              ],
+            },
+          },
+        },
+      });
+      jest.spyOn(context.octokit.rest.issues, "get").mockImplementation(
+        async (params) =>
+          ({
+            data: {
+              number: params?.issue_number,
+              title: "issue",
+              url: `https://github.com/${params?.owner}/${params?.repo}/issue/${params?.issue_number}`,
+              body: "This is an issue",
+              repository: {
+                name: params?.repo,
+                owner: {
+                  login: params?.owner,
+                },
+              },
+            },
+          }) as RestEndpointMethodTypes["issues"]["get"]["response"]
+      );
+      const pullReviewer = new PullReviewer(context);
+
+      const issues = await pullReviewer.getTasksFromPullRequest();
+      expect(issues).toEqual([linkedIssue]);
     });
   });
 
@@ -214,7 +265,7 @@ describe("Pull Reviewer tests", () => {
       issues: [],
     });
 
-    expect(await pullReviewer.getTasksFromPullRequest(context)).toBe(null);
+    expect(await pullReviewer.getTasksFromPullRequest()).toBe(null);
     expect(await pullReviewer.performPullPrecheck()).toEqual({ status: 200, reason: "Pull review data not found, Skipping automated review" });
   });
 });

@@ -1,8 +1,8 @@
-import { PullRequest } from "@octokit/graphql-schema";
+import { PullRequest, Repository } from "@octokit/graphql-schema";
 import { Context } from "../types/context";
 
 export type ClosedByPullRequestsReferences = {
-  node: Pick<PullRequest, "url" | "title" | "number" | "body"> & { owner: string; name: string };
+  node: Pick<PullRequest, "url" | "title" | "number" | "body"> & { repository: { name: Repository["name"]; owner: Pick<Repository["owner"], "login"> } };
 };
 
 export type IssuesClosedByThisPr = {

@@ -118,10 +118,10 @@ export class PullReviewer {
    */
   async submitCodeReview(review: string | undefined, status: CodeReviewStatus): Promise<void> {
     const { logger, payload } = this.context;
-    const { number, organization, repository, action, sender } = payload;
+    const { number, repository, action, sender } = payload;
     const { owner, name } = repository;
 
-    logger.info(`${organization}/${repository}#${number} - ${action} - ${sender?.login} - ${review}`);
+    logger.info(`${repository.owner.login}/${repository.name}#${number} - ${action} - ${sender?.login} - ${review}`);
 
     try {
       const response = await this.context.octokit.rest.pulls.createReview({
@@ -243,12 +243,12 @@ export class PullReviewer {
     } = this.context;
 
     const taskSpecifications: string[] = [];
-    const issues = await this.getTasksFromPullRequest(this.context);
+    const issues = await this.getTasksFromPullRequest();
     if (!issues) return null;
 
     issues.forEach((issue) => {
       if (!issue?.body) {
-        throw this.context.logger.error(`Task #${issue?.number} does not contain a specification and this cannot be automatically reviewed`);
+        throw this.context.logger.warn(`Task #${issue?.number} does not contain a specification and this cannot be automatically reviewed`);
       }
       taskSpecifications.push(issue.body);
     });
@@ -283,14 +283,8 @@ export class PullReviewer {
     );
   }
 
-  async checkIfPrClosesIssues(
-    octokit: Context["octokit"],
-    pr: {
-      owner: string;
-      repo: string;
-      pr_number: number;
-    }
-  ) {
+  async checkIfPrClosesIssues(pr: { owner: string; repo: string; pr_number: number }) {
+    const { octokit, logger } = this.context;
     const { owner, repo, pr_number } = pr;
 
     try {
@@ -300,16 +294,7 @@ export class PullReviewer {
         pr_number,
       });
 
-      const closingIssues = result.repository.pullRequest.closingIssuesReferences.edges.map((edge) => ({
-        number: edge.node.number,
-        title: edge.node.title,
-        url: edge.node.url,
-        body: edge.node.body,
-        repository: {
-          name: edge.node.name,
-          owner: edge.node.owner,
-        },
-      }));
+      const closingIssues = result.repository.pullRequest.closingIssuesReferences.edges.map((edge) => edge.node);
 
       if (closingIssues.length > 0) {
         return {
@@ -323,44 +308,47 @@ export class PullReviewer {
         };
       }
     } catch (error) {
-      console.error("Error fetching closing issues:", error);
+      logger.error("Error fetching closing issues:", { error: error instanceof Error ? error : undefined });
       return {
         closesIssues: false,
         issues: [],
       };
     }
   }
-  async getTasksFromPullRequest(context: Context) {
+
+  async getTasksFromPullRequest() {
     const {
       payload: { pull_request },
-    } = context;
+      logger,
+    } = this.context;
 
-    const { issues: closingIssues } = await this.checkIfPrClosesIssues(context.octokit, {
+    const { issues: closingIssues } = await this.checkIfPrClosesIssues({
       owner: pull_request.base.repo.owner.login,
       repo: pull_request.base.repo.name,
       pr_number: pull_request.number,
     });
+    logger.info(`Found ${closingIssues.length} linked issues`, { closingIssues: closingIssues.map((issue) => issue.url) });
 
     if (closingIssues.length === 0) {
-      this.context.logger.info("You need to link an issue before converting the pull request to ready for review.");
+      logger.info("You need to link an issue before converting the pull request to ready for review.");
       return null;
     }
 
     if (!closingIssues.every((issue) => issue.number)) {
-      throw this.context.logger.error("Task number not found", { pull_request });
+      throw logger.error("Task number not found", { pull_request });
     }
 
     const issues = (await Promise.all(
       closingIssues.map(async (issue) => {
         const issueNumber = issue.number;
         const issueRepo = issue.repository.name;
-        const issueOwner = issue.repository.owner;
+        const issueOwner = issue.repository.owner.login;
         return fetchIssue(this.context, issueNumber, issueOwner, issueRepo);
       })
     )) as Issue[];
 
     if (issues.some((issue) => !issue) || !issues) {
-      throw this.context.logger.error(`Error fetching issue, aborting`, {
+      throw logger.error(`Error fetching issue, aborting`, {
         owner: this.context.payload.repository.owner.login,
         repo: this.context.payload.repository.name,
         issues: issues.map((issue) => issue.url),
