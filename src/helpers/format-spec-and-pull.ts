@@ -1,9 +1,10 @@
-import { Context } from "../types/context";
-import { TokenLimits } from "../types/llm";
 import { createKey } from "../handlers/key";
+import { Context } from "../types/context";
 import { Issue } from "../types/github-types";
+import { TokenLimits } from "../types/llm";
 import { fetchPullRequestDiff } from "./pull-helpers/fetch-diff";
 import { encodeAsync } from "./pull-helpers/pull-request-parsing";
+
 export async function createPullSpecContextBlockSection({
   context,
   tokenLimits,
@@ -31,6 +32,8 @@ export async function createPullSpecContextBlockSection({
   const tokenCount = (await encodeAsync(localContextWithoutDiff)).length;
   tokenLimits.runningTokenCount += tokenCount;
   tokenLimits.tokensRemaining -= tokenCount;
+
+  context.logger.info("Token count with specifications and without diffs", { tokenLimits });
 
   // Fetch our diff if we have one; this excludes the largest of files to keep within token limits
   const { diff } = await fetchPullRequestDiff(context, tokenLimits);

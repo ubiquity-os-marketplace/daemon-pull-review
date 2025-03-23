@@ -13,13 +13,7 @@ export const pluginSettingsSchema = T.Object(
       description: "The base URL for OpenRouter AI",
       examples: ["https://openrouter.ai/api/v1"],
     }),
-    tokenLimit: T.Object(
-      {
-        context: T.Number({ default: 200000 }),
-        completion: T.Number({ default: 4096 }),
-      },
-      { default: {}, description: "The token limits for LLM context and completion", examples: [{ context: 200000, completion: 4096 }] }
-    ),
+    maxRetries: T.Number({ default: 5, description: "The maximum number of retries for a LLM request", examples: [5] }),
     reviewInterval: T.Transform(
       T.Optional(T.String({ default: "1 Day", description: "How often a review can be performed. Omit for no limit", examples: ["1 Day", "1 Hour", "1 Week"] }))
     )

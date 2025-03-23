@@ -3,7 +3,8 @@ import { drop } from "@mswjs/data";
 import { Octokit, RestEndpointMethodTypes } from "@octokit/rest";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import ms from "ms";
-import { CompletionsType } from "../src/adapters/open-router/helpers/completions";
+import OpenAI from "openai";
+import { OpenRouterCompletion } from "../src/adapters/open-router/helpers/completions";
 import { Context, SupportedEvents } from "../src/types";
 import { Issue } from "../src/types/github-types";
 import { db } from "./__mocks__/db";
@@ -175,13 +176,13 @@ describe("Pull Reviewer tests", () => {
 
   describe("Review data parsing", () => {
     it("should throw error for invalid confidence threshold", async () => {
-      const { PullReviewer } = await import("../src/handlers/pull-reviewer");
-      const pullReviewer = new PullReviewer(createContext());
+      const context = createContext();
+      const completion = new OpenRouterCompletion({} as unknown as OpenAI, context);
 
       const invalidInput = '{"confidenceThreshold": "invalid", "reviewComment": "test"}';
 
       expect(() => {
-        pullReviewer.validateReviewOutput(invalidInput);
+        completion.validateReviewOutput(invalidInput);
       }).toThrow(
         expect.objectContaining({
           logMessage: expect.objectContaining({
@@ -192,13 +193,13 @@ describe("Pull Reviewer tests", () => {
     });
 
     it("should throw error for missing review comment", async () => {
-      const { PullReviewer } = await import("../src/handlers/pull-reviewer");
-      const pullReviewer = new PullReviewer(createContext());
+      const context = createContext();
+      const completion = new OpenRouterCompletion({} as unknown as OpenAI, context);
 
       const invalidInput = '{"confidenceThreshold": 0.8}';
 
       expect(() => {
-        pullReviewer.validateReviewOutput(invalidInput);
+        completion.validateReviewOutput(invalidInput);
       }).toThrow(
         expect.objectContaining({
           logMessage: expect.objectContaining({
@@ -209,11 +210,11 @@ describe("Pull Reviewer tests", () => {
     });
 
     it("should accept string confidence threshold and convert to number", async () => {
-      const { PullReviewer } = await import("../src/handlers/pull-reviewer");
-      const pullReviewer = new PullReviewer(createContext());
+      const context = createContext();
+      const completion = new OpenRouterCompletion({} as unknown as OpenAI, context);
 
       const input = '{"confidenceThreshold": "0.8", "reviewComment": "test"}';
-      const result = pullReviewer.validateReviewOutput(input);
+      const result = completion.validateReviewOutput(input);
 
       expect(result).toEqual({
         confidenceThreshold: 0.8,
@@ -243,10 +244,10 @@ describe("Pull Reviewer tests", () => {
   });
 
   it("should correctly parse valid review data", async () => {
-    const { PullReviewer } = await import("../src/handlers/pull-reviewer");
-    const pullReviewer = new PullReviewer(createContext());
+    const context = createContext();
+    const completion = new OpenRouterCompletion({} as unknown as OpenAI, context);
 
-    const result = pullReviewer.validateReviewOutput(MOCK_ANSWER_PASSED);
+    const result = completion.validateReviewOutput(MOCK_ANSWER_PASSED);
     expect(result).toEqual({
       confidenceThreshold: 1,
       reviewComment: "passed",
@@ -308,10 +309,7 @@ function createContext() {
       reviewInterval: ms("1 Day"),
       openRouterAiModel: "anthropic/claude-3.5-sonnet",
       openRouterBaseUrl: "https://openrouter.ai/api/v1",
-      tokenLimit: {
-        context: 200000,
-        completion: 4096,
-      },
+      maxRetries: 1,
     },
     env: {
       UBIQUITY_OS_APP_NAME: "UbiquityOS",
@@ -320,13 +318,12 @@ function createContext() {
     adapters: {
       openRouter: {
         completions: {
-          getModelMaxTokenLimit: () => 50000,
-          getModelMaxOutputLimit: () => 50000,
-          createCompletion: async (): Promise<CompletionsType> => ({
-            answer: MOCK_ANSWER_PASSED,
-            groundTruths: [""],
+          getModelTokenLimits: () => ({
+            contextLength: 50000,
+            maxCompletionTokens: 50000,
           }),
-          createGroundTruthCompletion: async (): Promise<string> => `[""]`,
+          createCodeReviewCompletion: async () => JSON.parse(MOCK_ANSWER_PASSED),
+          createGroundTruthCompletion: async () => [""],
         },
       },
     },

@@ -55,13 +55,12 @@ export class PullReviewer {
       return { status: 200, reason: "Pull review data not found, Skipping automated review" };
     }
 
-    const { reviewComment, confidenceThreshold } = this.validateReviewOutput(pullReviewData.answer);
-    if (confidenceThreshold > 0.5) {
+    if (pullReviewData.confidenceThreshold > 0.5) {
       await this.addThumbsUpReaction();
     } else {
       await this.convertPullToDraft();
       await this.removeThumbsUpReaction();
-      await this.submitCodeReview(reviewComment, "REQUEST_CHANGES");
+      await this.submitCodeReview(pullReviewData.reviewComment, "REQUEST_CHANGES");
     }
     return { status: 200, reason: "Success" };
   }
@@ -258,9 +257,10 @@ export class PullReviewer {
     const sysPromptTokenCount = (await encodeAsync(createCodeReviewSysMsg(groundTruths, UBIQUITY_OS_APP_NAME, ""))).length;
     const queryTokenCount = (await encodeAsync(llmQuery)).length;
 
+    const modelTokenLimits = await completions.getModelTokenLimits(openRouterAiModel);
     const tokenLimits: TokenLimits = {
-      modelMaxTokenLimit: this.context.adapters.openRouter.completions.getModelMaxTokenLimit(this.context.config.openRouterAiModel),
-      maxCompletionTokens: this.context.adapters.openRouter.completions.getModelMaxOutputLimit(this.context.config.openRouterAiModel),
+      modelMaxTokenLimit: modelTokenLimits.contextLength,
+      maxCompletionTokens: 2000, // this roughly corresponds to 10k characters which will be enough for a PR review comment
       runningTokenCount: 0,
       tokensRemaining: 0,
     };
@@ -268,18 +268,20 @@ export class PullReviewer {
     // what we start out with to include files
     tokenLimits.tokensRemaining = tokenLimits.modelMaxTokenLimit - tokenLimits.maxCompletionTokens - sysPromptTokenCount - queryTokenCount;
 
+    this.context.logger.info("Starting token count", { tokenLimits });
     const formattedSpecAndPull = await createPullSpecContextBlockSection({
       context: this.context,
       tokenLimits,
       issues,
     });
+    this.context.logger.info("Ending token count", { tokenLimits });
 
-    return await completions.createCompletion(
+    return await completions.createCodeReviewCompletion(
       openRouterAiModel,
       formattedSpecAndPull,
       groundTruths,
       UBIQUITY_OS_APP_NAME,
-      completions.getModelMaxOutputLimit(openRouterAiModel)
+      tokenLimits.maxCompletionTokens
     );
   }
 
@@ -356,23 +358,5 @@ export class PullReviewer {
     }
 
     return issues;
-  }
-
-  validateReviewOutput(reviewString: string) {
-    let reviewOutput: { confidenceThreshold: number; reviewComment: string };
-    try {
-      reviewOutput = JSON.parse(reviewString);
-    } catch (err) {
-      throw this.context.logger.error("Couldn't parse JSON output; Aborting", { err });
-    }
-    if (typeof reviewOutput.reviewComment !== "string") {
-      throw this.context.logger.error("LLM failed to output review comment successfully");
-    }
-    const confidenceThreshold = reviewOutput.confidenceThreshold;
-    if (Number.isNaN(Number(confidenceThreshold))) {
-      throw this.context.logger.error("LLM failed to output a confidence threshold successfully");
-    }
-
-    return { confidenceThreshold: Number(reviewOutput.confidenceThreshold), reviewComment: reviewOutput.reviewComment };
   }
 }
