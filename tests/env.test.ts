@@ -8,7 +8,7 @@ describe("pluginSettingsSchema", () => {
       openRouterAiModel: "anthropic/claude-3.5-sonnet",
       openRouterBaseUrl: "https://openrouter.ai/api/v1",
       reviewInterval: "1 Day",
-      maxRetries: 5,
+      maxRetryAttempts: 5,
     });
   });
 });

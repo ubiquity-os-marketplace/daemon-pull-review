@@ -56,7 +56,7 @@ export class OpenRouterCompletion extends SuperOpenRouter {
         return { completion: res, reviewData };
       },
       {
-        maxRetries: this.context.config.maxRetries,
+        maxRetries: this.context.config.maxRetryAttempts,
         onError: (err) => {
           this.context.logger.error(`LLM Error, retrying...`, { err });
         },
@@ -110,7 +110,7 @@ export class OpenRouterCompletion extends SuperOpenRouter {
         return this.validateGroundTruthsOutput(answer);
       },
       {
-        maxRetries: this.context.config.maxRetries,
+        maxRetries: this.context.config.maxRetryAttempts,
         onError: (err) => {
           this.context.logger.error(`LLM Error, retrying...`, { err });
         },

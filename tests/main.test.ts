@@ -309,7 +309,7 @@ function createContext() {
       reviewInterval: ms("1 Day"),
       openRouterAiModel: "anthropic/claude-3.5-sonnet",
       openRouterBaseUrl: "https://openrouter.ai/api/v1",
-      maxRetries: 1,
+      maxRetryAttempts: 1,
     },
     env: {
       UBIQUITY_OS_APP_NAME: "UbiquityOS",
