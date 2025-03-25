@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { drop } from "@mswjs/data";
-import { Octokit, RestEndpointMethodTypes } from "@octokit/rest";
+import { customOctokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import ms from "ms";
 import OpenAI from "openai";
@@ -109,6 +109,7 @@ describe("Pull Reviewer tests", () => {
           },
         },
       });
+      /* eslint-disable @typescript-eslint/no-explicit-any */
       jest.spyOn(context.octokit.rest.issues, "get").mockImplementation(
         async (params) =>
           ({
@@ -124,7 +125,7 @@ describe("Pull Reviewer tests", () => {
                 },
               },
             },
-          }) as RestEndpointMethodTypes["issues"]["get"]["response"]
+          }) as any
       );
       const pullReviewer = new PullReviewer(context);
 
@@ -327,7 +328,7 @@ function createContext() {
         },
       },
     },
-    octokit: new Octokit(),
+    octokit: new customOctokit(),
     eventName: "pull_request.ready_for_review" as SupportedEvents,
   } as unknown as Context;
 }
