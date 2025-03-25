@@ -67,7 +67,7 @@ export class OpenRouterCompletion extends SuperOpenRouter {
     const outputTokens = completion.usage?.completion_tokens;
 
     if (inputTokens && outputTokens) {
-      this.context.logger.info(`Number of tokens used: ${inputTokens + outputTokens}`);
+      this.context.logger.info(`Number of tokens used for code review: ${inputTokens + outputTokens}`, { inputTokens, outputTokens });
     } else {
       this.context.logger.info(`LLM did not output usage statistics`);
     }
