@@ -38,12 +38,12 @@ function selectIncludedFiles(context: Context, files: { filename: string; tokenC
 
 export async function processPullRequestDiff(diff: string, tokenLimits: TokenLimits, context: Context) {
   const excludedFilePatterns = await getExcludedFiles(context);
-  context.logger.info("Excluded files", { excludedFilePatterns });
+  context.logger.debug("Excluded files", { excludedFilePatterns });
   const sortedDiffs = await filterAndSortDiffs(diff, excludedFilePatterns);
-  context.logger.info("Filtered and sorted files", { files: sortedDiffs.map((file) => ({ filename: file.filename, tokenCount: file.tokenCount })) });
+  context.logger.debug("Filtered and sorted files", { files: sortedDiffs.map((file) => ({ filename: file.filename, tokenCount: file.tokenCount })) });
 
   const includedFiles = selectIncludedFiles(context, sortedDiffs, tokenLimits);
-  context.logger.info("Included files", { files: includedFiles.map((file) => ({ filename: file.filename, tokenCount: file.tokenCount })), tokenLimits });
+  context.logger.debug("Included files", { files: includedFiles.map((file) => ({ filename: file.filename, tokenCount: file.tokenCount })), tokenLimits });
 
   if (includedFiles.length === 0) {
     context.logger.error(`Cannot include any files from diff without exceeding token limits.`);

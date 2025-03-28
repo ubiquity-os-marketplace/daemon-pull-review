@@ -33,7 +33,7 @@ export async function createPullSpecContextBlockSection({
   tokenLimits.runningTokenCount += tokenCount;
   tokenLimits.tokensRemaining -= tokenCount;
 
-  context.logger.info("Token count with specifications and without diffs", { tokenLimits });
+  context.logger.debug("Token count with specifications and without diffs", { tokenLimits });
 
   // Fetch our diff if we have one; this excludes the largest of files to keep within token limits
   const { diff } = await fetchPullRequestDiff(context, tokenLimits);

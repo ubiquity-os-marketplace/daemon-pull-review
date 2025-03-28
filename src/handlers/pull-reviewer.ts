@@ -268,13 +268,13 @@ export class PullReviewer {
     // what we start out with to include files
     tokenLimits.tokensRemaining = tokenLimits.modelMaxTokenLimit - tokenLimits.maxCompletionTokens - sysPromptTokenCount - queryTokenCount;
 
-    this.context.logger.info("Starting token count", { tokenLimits });
+    this.context.logger.debug("Starting token count", { tokenLimits });
     const formattedSpecAndPull = await createPullSpecContextBlockSection({
       context: this.context,
       tokenLimits,
       issues,
     });
-    this.context.logger.info("Ending token count", { tokenLimits });
+    this.context.logger.debug("Ending token count", { tokenLimits });
 
     return await completions.createCodeReviewCompletion(
       openRouterAiModel,
