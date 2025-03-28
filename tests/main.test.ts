@@ -109,7 +109,6 @@ describe("Pull Reviewer tests", () => {
           },
         },
       });
-      /* eslint-disable @typescript-eslint/no-explicit-any */
       jest.spyOn(context.octokit.rest.issues, "get").mockImplementation(
         async (params) =>
           ({
@@ -125,7 +124,7 @@ describe("Pull Reviewer tests", () => {
                 },
               },
             },
-          }) as any
+          }) as unknown as ReturnType<typeof context.octokit.rest.issues.get>
       );
       const pullReviewer = new PullReviewer(context);
 
