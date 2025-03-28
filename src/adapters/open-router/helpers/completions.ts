@@ -24,7 +24,7 @@ export class OpenRouterCompletion extends SuperOpenRouter {
 
     const { completion, reviewData } = await retry(
       async () => {
-        const res = (await this.client.chat.completions.create({
+        const { completion, answer } = await this.createCompletion({
           model: model,
           max_completion_tokens: maxCompletionTokens,
           messages: [
@@ -38,22 +38,10 @@ export class OpenRouterCompletion extends SuperOpenRouter {
             },
           ],
           temperature: 0,
-        })) as OpenAI.Chat.Completions.ChatCompletion | OpenRouterError;
-        if ("error" in res) {
-          throw this.context.logger.error(`Unexpected error from LLM: ${res.error.message} (${res.error.code})`, { err: res.error });
-        }
-
-        if (!res.choices || res.choices.length === 0) {
-          throw this.context.logger.error(`Unexpected response from LLM: no choices found`);
-        }
-
-        const answer = res.choices[0].message.content;
-        if (!answer) {
-          throw this.context.logger.error("Unexpected response format: Expected text block");
-        }
+        });
         const reviewData = this.validateReviewOutput(answer);
 
-        return { completion: res, reviewData };
+        return { completion, reviewData };
       },
       {
         maxRetries: this.context.config.maxRetryAttempts,
@@ -82,7 +70,7 @@ export class OpenRouterCompletion extends SuperOpenRouter {
 
     return await retry(
       async () => {
-        const res = (await this.client.chat.completions.create({
+        const { answer } = await this.createCompletion({
           model: openRouterAiModel,
           messages: [
             {
@@ -94,18 +82,7 @@ export class OpenRouterCompletion extends SuperOpenRouter {
               content: groundTruthSource.join("\n"),
             },
           ],
-        })) as OpenAI.Chat.Completions.ChatCompletion | OpenRouterError;
-        if ("error" in res) {
-          throw this.context.logger.error(`Unexpected error from LLM: ${res.error.message} (${res.error.code})`, { err: res.error });
-        }
-
-        if (!res.choices || res.choices.length === 0) {
-          throw this.context.logger.error(`Unexpected response from LLM: no choices found`);
-        }
-        const answer = res.choices[0].message.content;
-        if (!answer) {
-          throw this.context.logger.error("Unexpected response format: Expected text block");
-        }
+        });
 
         return this.validateGroundTruthsOutput(answer);
       },
@@ -116,6 +93,23 @@ export class OpenRouterCompletion extends SuperOpenRouter {
         },
       }
     );
+  }
+
+  async createCompletion(body: OpenAI.Chat.Completions.ChatCompletionCreateParams, options?: OpenAI.RequestOptions) {
+    const completion = (await this.client.chat.completions.create(body, options)) as OpenAI.Chat.Completions.ChatCompletion | OpenRouterError;
+    if ("error" in completion) {
+      throw this.context.logger.error(`Unexpected error from LLM: ${completion.error.message} (${completion.error.code})`, { err: completion.error });
+    }
+
+    if (!completion.choices || completion.choices.length === 0) {
+      throw this.context.logger.error(`Unexpected response from LLM: no choices found`);
+    }
+    const answer = completion.choices[0].message.content;
+    if (!answer) {
+      throw this.context.logger.error("Unexpected response format: Expected text block");
+    }
+
+    return { completion, answer };
   }
 
   validateReviewOutput(reviewString: string) {
