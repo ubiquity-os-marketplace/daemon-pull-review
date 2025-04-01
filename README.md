@@ -1,6 +1,6 @@
 # `@ubiquity-os/daemon-pull-review`
 
-This is a high context aware GitHub organization integrated bot that uses a LLM to provide automated reviews and feeback to Github pull requests.
+This is a high context aware GitHub organization integrated bot that uses a LLM to provide automated reviews and feedback to Github pull requests.
 
 ## Usage
 
