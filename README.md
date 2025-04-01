@@ -1,6 +1,6 @@
 # `@ubiquity-os/daemon-pull-review`
 
-This is a high context aware GitHub organization integrated bot that uses the Anthropic Claude 3.5 Sonnet model to provide automated reviews and feeback to Github pull requests.
+This is a high context aware GitHub organization integrated bot that uses a LLM to provide automated reviews and feedback to Github pull requests.
 
 ## Usage
 
@@ -60,12 +60,9 @@ plugins:
         with:
           openRouterAiModel: "" # Optional - defaults to "anthropic/claude-3.5-sonnet"
           openRouterBaseUrl: "" # Optional - defaults to Open Router's API endpoint
-          tokenLimit: { context: 200000, output: 4096 } #  # Required if using custom openRouterAiModel. Defaults to Claude 3.5 Sonnet limits
+          maxRetryAttempts: 5 # Optional - defaults to 5
           reviewInterval: "1 Hour" # Optional - defaults to no interval (review on every `ready_for_review` event)
 ```
-
-Important:
-If you specify a custom openRouterAiModel, you must also provide the appropriate tokenLimit configuration for that model. The default token limits are set for Claude 3.5 Sonnet and may not be suitable for other models.
 
 `.dev.vars` (for local testing):
 

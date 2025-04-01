@@ -19,26 +19,10 @@
         "examples": ["https://openrouter.ai/api/v1"],
         "type": "string"
       },
-      "tokenLimit": {
-        "default": {},
-        "description": "The token limits for LLM context and completion",
-        "examples": [
-          {
-            "context": 200000,
-            "completion": 4096
-          }
-        ],
-        "type": "object",
-        "properties": {
-          "context": {
-            "default": 200000,
-            "type": "number"
-          },
-          "completion": {
-            "default": 4096,
-            "type": "number"
-          }
-        }
+      "maxRetryAttempts": {
+        "default": 5,
+        "description": "The number of times to retry AI prompts",
+        "type": "number"
       },
       "reviewInterval": {
         "default": "1 Day",

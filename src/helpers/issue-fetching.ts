@@ -1,7 +1,6 @@
 import { Context } from "../types/context";
-import { Issue } from "../types/github-types";
 
-export async function fetchIssue(context: Context, issueNum?: number, owner?: string, repo?: string): Promise<Issue | null> {
+export async function fetchIssue(context: Context, issueNum?: number, owner?: string, repo?: string) {
   const { payload, octokit } = context;
 
   try {
