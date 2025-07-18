@@ -1,113 +1,164 @@
+import { getOpenRouterModelTokenLimits, OpenRouterError, retry } from "@ubiquity-os/plugin-sdk/helpers";
+import OpenAI from "openai";
 import { createCodeReviewSysMsg, llmQuery } from "../../../handlers/prompt";
 import { Context } from "../../../types";
 import { SuperOpenRouter } from "./open-router";
-import OpenAI from "openai";
-
-export interface CompletionsType {
-  answer: string;
-  groundTruths: string[];
-}
 
 export class OpenRouterCompletion extends SuperOpenRouter {
   constructor(client: OpenAI, context: Context) {
     super(client, context);
   }
 
-  getModelMaxTokenLimit(model: string): number {
-    const tokenLimit = this.context.config.tokenLimit.context;
-    if (!tokenLimit) {
-      throw this.context.logger.error(`The token limits for configured model ${model} was not found`);
+  async getModelTokenLimits(model: string) {
+    const modelLimits = await getOpenRouterModelTokenLimits(model);
+    if (!modelLimits) {
+      throw this.context.logger.error(`Model not found: ${model}`);
     }
-    return tokenLimit;
+    return modelLimits;
   }
 
-  getModelMaxOutputLimit(model: string): number {
-    const tokenLimit = this.context.config.tokenLimit.completion;
-    if (!tokenLimit) {
-      throw this.context.logger.error(`The token limits for configured model ${model} was not found`);
-    }
-    return tokenLimit;
-  }
-
-  async createCompletion(model: string, localContext: string, groundTruths: string[], botName: string, maxTokens: number): Promise<CompletionsType> {
+  async createCodeReviewCompletion(model: string, localContext: string, groundTruths: string[], botName: string, maxCompletionTokens: number) {
     const sysMsg = createCodeReviewSysMsg(groundTruths, botName, localContext);
 
     this.context.logger.debug(`System message: ${sysMsg}`);
 
-    const res = (await this.client.chat.completions.create({
-      model: model,
-      messages: [
-        {
-          role: "system",
-          content: sysMsg,
+    const { completion, reviewData } = await retry(
+      async () => {
+        const { completion, answer } = await this.createCompletion({
+          model: model,
+          max_completion_tokens: maxCompletionTokens,
+          messages: [
+            {
+              role: "system",
+              content: sysMsg,
+            },
+            {
+              role: "user",
+              content: llmQuery,
+            },
+          ],
+          temperature: 0,
+        });
+        const reviewData = this.validateReviewOutput(answer);
+
+        return { completion, reviewData };
+      },
+      {
+        maxRetries: this.context.config.maxRetryAttempts,
+        onError: (err) => {
+          this.context.logger.warn(`LLM Error, retrying...`, { err });
         },
-        {
-          role: "user",
-          content: llmQuery,
-        },
-      ],
-      max_tokens: maxTokens,
-      temperature: 0,
-    })) as OpenAI.Chat.Completions.ChatCompletion & {
-      _request_id?: string | null;
-      error: { message: string; code: number; metadata: object } | undefined;
-    };
+      }
+    );
 
-    if (!res.choices || res.choices.length === 0) {
-      throw this.context.logger.error(`Unexpected no response from LLM, Reason: ${res.error ? res.error.message : "No reason specified"}`);
-    }
-
-    const answer = res.choices[0].message.content;
-    if (!answer) {
-      throw this.context.logger.error("Unexpected response format: Expected text block");
-    }
-
-    const inputTokens = res.usage?.prompt_tokens;
-    const outputTokens = res.usage?.completion_tokens;
+    const inputTokens = completion.usage?.prompt_tokens;
+    const outputTokens = completion.usage?.completion_tokens;
 
     if (inputTokens && outputTokens) {
-      this.context.logger.info(`Number of tokens used: ${inputTokens + outputTokens}`);
+      this.context.logger.info(`Number of tokens used for code review: ${inputTokens + outputTokens}`, { inputTokens, outputTokens });
     } else {
       this.context.logger.info(`LLM did not output usage statistics`);
     }
 
-    return {
-      answer,
-      groundTruths,
-    };
+    return reviewData;
   }
 
-  async createGroundTruthCompletion(context: Context, groundTruthSource: string, systemMsg: string): Promise<string | null> {
+  async createGroundTruthCompletion(context: Context, groundTruthSource: string[], systemMsg: string) {
     const {
       config: { openRouterAiModel },
     } = context;
 
-    const res = (await this.client.chat.completions.create({
-      model: openRouterAiModel,
-      max_tokens: this.getModelMaxOutputLimit(openRouterAiModel),
-      messages: [
-        {
-          role: "system",
-          content: systemMsg,
-        },
-        {
-          role: "user",
-          content: groundTruthSource,
-        },
-      ],
-    })) as OpenAI.Chat.Completions.ChatCompletion & {
-      _request_id?: string | null;
-      error: { message: string; code: number; metadata: object } | undefined;
-    };
+    return await retry(
+      async () => {
+        const { answer } = await this.createCompletion({
+          model: openRouterAiModel,
+          messages: [
+            {
+              role: "system",
+              content: systemMsg,
+            },
+            {
+              role: "user",
+              content: groundTruthSource.join("\n"),
+            },
+          ],
+        });
 
-    if (!res.choices || res.choices.length === 0) {
-      throw this.context.logger.error(`Unexpected no response from LLM, Reason: ${res.error ? res.error.message : "No reason specified"}`);
+        return this.validateGroundTruthsOutput(answer);
+      },
+      {
+        maxRetries: this.context.config.maxRetryAttempts,
+        onError: (err) => {
+          this.context.logger.warn(`LLM Error, retrying...`, { err });
+        },
+      }
+    );
+  }
+
+  async createCompletion(body: OpenAI.Chat.Completions.ChatCompletionCreateParams, options?: OpenAI.RequestOptions) {
+    const completion = (await this.client.chat.completions.create(body, options)) as OpenAI.Chat.Completions.ChatCompletion | OpenRouterError;
+    if ("error" in completion) {
+      throw this.context.logger.error(`Unexpected error from LLM: ${completion.error.message} (${completion.error.code})`, { err: completion.error });
     }
-    const answer = res.choices[0].message.content;
+
+    if (!completion.choices || completion.choices.length === 0) {
+      throw this.context.logger.error(`Unexpected response from LLM: no choices found`);
+    }
+    const answer = completion.choices[0].message.content;
     if (!answer) {
       throw this.context.logger.error("Unexpected response format: Expected text block");
     }
 
-    return answer;
+    return { completion, answer };
+  }
+
+  validateReviewOutput(reviewString: string) {
+    const { logger } = this.context;
+    let reviewOutput: { confidenceThreshold: number; reviewComment: string };
+
+    try {
+      reviewOutput = JSON.parse(reviewString);
+    } catch (err) {
+      throw logger.error("Couldn't parse JSON output; Aborting", { err });
+    }
+    if (typeof reviewOutput.reviewComment !== "string") {
+      throw logger.error("LLM failed to output review comment successfully");
+    }
+    const confidenceThreshold = Number(reviewOutput.confidenceThreshold);
+    if (Number.isNaN(confidenceThreshold) || confidenceThreshold < 0 || confidenceThreshold > 1) {
+      throw logger.error("LLM failed to output a confidence threshold successfully");
+    }
+
+    return { confidenceThreshold, reviewComment: reviewOutput.reviewComment };
+  }
+
+  validateGroundTruthsOutput(truthsString: string | null): string[] {
+    const { logger } = this.context;
+
+    let truths;
+    if (!truthsString) {
+      throw logger.error("Failed to generate ground truths");
+    }
+
+    try {
+      truths = JSON.parse(truthsString);
+    } catch (err) {
+      throw logger.error("Failed to parse ground truths", { err });
+    }
+    if (!Array.isArray(truths)) {
+      throw logger.error("Ground truths must be an array");
+    }
+
+    if (truths.length > 10) {
+      throw logger.error("Ground truths must not exceed 10");
+    }
+
+    truths.forEach((truth: string) => {
+      if (typeof truth !== "string") {
+        throw logger.error("Each ground truth must be a string");
+      }
+    });
+
+    return truths;
   }
 }

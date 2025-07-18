@@ -1,9 +1,9 @@
 import { encode } from "gpt-tokenizer";
-import { TokenLimits } from "../../types/llm";
 import { EncodeOptions } from "gpt-tokenizer/esm/GptEncoding";
-import { Context } from "../../types";
-import { getExcludedFiles } from "../excluded-files";
 import { minimatch } from "minimatch";
+import { Context } from "../../types";
+import { TokenLimits } from "../../types/llm";
+import { getExcludedFiles } from "../excluded-files";
 
 async function filterAndSortDiffs(diff: string, excludedPatterns: string[]): Promise<{ filename: string; tokenCount: number; diffContent: string }[]> {
   const perFileDiffs = parsePerFileDiffs(diff).filter((file) => excludedPatterns.every((pattern) => !minimatch(file.filename, pattern)));
@@ -19,20 +19,18 @@ async function filterAndSortDiffs(diff: string, excludedPatterns: string[]): Pro
   return accurateFileDiffStats.sort((a, b) => a.tokenCount - b.tokenCount);
 }
 
-function selectIncludedFiles(
-  files: { filename: string; tokenCount: number; diffContent: string }[],
-  tokenLimits: TokenLimits,
-  logger: Context["logger"]
-): typeof files {
+function selectIncludedFiles(context: Context, files: { filename: string; tokenCount: number; diffContent: string }[], tokenLimits: TokenLimits): typeof files {
   const includedFiles = [];
   for (const file of files) {
     if (tokenLimits.runningTokenCount + file.tokenCount > tokenLimits.tokensRemaining) {
-      logger.info(`Skipping ${file.filename} to stay within token limits.`);
+      context.logger.info(`Skipping ${file.filename} to stay within token limits.`);
       continue;
     }
     includedFiles.push(file);
     tokenLimits.runningTokenCount += file.tokenCount;
     tokenLimits.tokensRemaining -= file.tokenCount;
+
+    context.logger.info(`Added ${file.filename} to diff.`, { filename: file.filename, tokenCount: file.tokenCount, tokenLimits });
   }
 
   return includedFiles;
@@ -40,9 +38,12 @@ function selectIncludedFiles(
 
 export async function processPullRequestDiff(diff: string, tokenLimits: TokenLimits, context: Context) {
   const excludedFilePatterns = await getExcludedFiles(context);
+  context.logger.debug("Excluded files", { excludedFilePatterns });
   const sortedDiffs = await filterAndSortDiffs(diff, excludedFilePatterns);
+  context.logger.debug("Filtered and sorted files", { files: sortedDiffs.map((file) => ({ filename: file.filename, tokenCount: file.tokenCount })) });
 
-  const includedFiles = selectIncludedFiles(sortedDiffs, tokenLimits, context.logger);
+  const includedFiles = selectIncludedFiles(context, sortedDiffs, tokenLimits);
+  context.logger.debug("Included files", { files: includedFiles.map((file) => ({ filename: file.filename, tokenCount: file.tokenCount })), tokenLimits });
 
   if (includedFiles.length === 0) {
     context.logger.error(`Cannot include any files from diff without exceeding token limits.`);

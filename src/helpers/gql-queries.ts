@@ -1,7 +1,8 @@
-import { PullRequest } from "@octokit/graphql-schema";
+import { PullRequest, Repository } from "@octokit/graphql-schema";
+import { Context } from "../types/context";
 
-type ClosedByPullRequestsReferences = {
-  node: Pick<PullRequest, "url" | "title" | "number" | "body"> & { owner: string; name: string };
+export type ClosedByPullRequestsReferences = {
+  node: Pick<PullRequest, "url" | "title" | "number" | "body"> & { repository: { name: Repository["name"]; owner: Pick<Repository["owner"], "login"> } };
 };
 
 export type IssuesClosedByThisPr = {
@@ -38,3 +39,14 @@ export const closedByPullRequestsReferences = /* GraphQL */ `
     }
   }
 `;
+
+export async function getLinkedIssues(context: Context) {
+  const prNumber = context.payload.pull_request.number;
+
+  const response = await context.octokit.graphql<IssuesClosedByThisPr>(closedByPullRequestsReferences, {
+    owner: context.payload.repository.owner.login,
+    repo: context.payload.repository.name,
+    pr_number: prNumber,
+  });
+  return response.repository.pullRequest.closingIssuesReferences.edges;
+}

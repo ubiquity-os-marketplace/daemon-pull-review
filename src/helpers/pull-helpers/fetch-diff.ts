@@ -2,21 +2,19 @@ import { Context } from "../../types/context";
 import { TokenLimits } from "../../types/llm";
 import { processPullRequestDiff } from "./pull-request-parsing";
 
-export async function fetchPullRequestDiff(context: Context, org: string, repo: string, issue: number, tokenLimits: TokenLimits) {
+export async function fetchPullRequestDiff(context: Context, tokenLimits: TokenLimits) {
   const { octokit } = context;
   let diff: string;
+  const diffUrl = context.payload.pull_request.diff_url;
 
   try {
-    const diffResponse = await octokit.rest.pulls.get({
-      owner: org,
-      repo,
-      pull_number: issue,
-      mediaType: { format: "diff" },
+    const diffResponse = await octokit.request({
+      method: "GET",
+      url: diffUrl,
     });
-
-    diff = diffResponse.data as unknown as string;
+    diff = diffResponse.data as string;
   } catch (e) {
-    context.logger.error(`Error fetching pull request data`, { owner: org, repo, issue, err: String(e) });
+    context.logger.error("Error fetching pull request diff", { e });
     return { diff: null };
   }
 

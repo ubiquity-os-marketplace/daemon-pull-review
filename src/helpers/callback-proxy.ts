@@ -1,3 +1,4 @@
+import { handlePullRequestEditedEvent } from "../handlers/closing-keyword";
 import { PullReviewer } from "../handlers/pull-reviewer";
 import { Context, SupportedEvents } from "../types";
 import { CallbackResult, ProxyCallbacks } from "../types/proxy";
@@ -12,6 +13,8 @@ import { CallbackResult, ProxyCallbacks } from "../types/proxy";
 const callbacks = {
   "pull_request.opened": [(context: Context) => new PullReviewer(context).performPullPrecheck()],
   "pull_request.ready_for_review": [(context: Context) => new PullReviewer(context).performPullPrecheck()],
+  "pull_request.reopened": [(context: Context) => new PullReviewer(context).performPullPrecheck()],
+  "pull_request.edited": [(context: Context<"pull_request.edited">) => handlePullRequestEditedEvent(context)],
 } as ProxyCallbacks;
 
 export async function callCallbacks<T extends SupportedEvents>(context: Context<T>, eventName: T): Promise<CallbackResult> {
