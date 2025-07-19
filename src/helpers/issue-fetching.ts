@@ -13,9 +13,9 @@ export async function fetchIssue(context: Context, issueNum?: number, owner?: st
   } catch (error) {
     context.logger.error(`Error fetching issue`, {
       err: error,
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number: payload.pull_request.number,
+      owner: owner ?? payload.repository.owner.login,
+      repo: repo ?? payload.repository.name,
+      issueNum: issueNum ?? payload.pull_request.number,
     });
     return null;
   }
