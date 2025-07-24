@@ -17,7 +17,8 @@
     "knip-ci": "knip --no-exit-code --reporter json --config .github/knip.ts",
     "prepare": "husky install",
     "test": "cross-env NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest --setupFiles dotenv/config --coverage",
-    "worker": "wrangler dev --env dev --port 4000"
+    "worker": "wrangler dev --env dev --port 4000",
+    "dev": "bun run --port 4000 --no-clear-screen --watch src/worker.ts"
   },
   "keywords": [
     "typescript",
@@ -28,8 +29,8 @@
   ],
   "dependencies": {
     "@octokit/graphql-schema": "^15.25.0",
-    "@sinclair/typebox": "0.34.3",
-    "@ubiquity-os/plugin-sdk": "^3.1.4",
+    "@sinclair/typebox": "0.34.38",
+    "@ubiquity-os/plugin-sdk": "^3.1.11",
     "@ubiquity-os/ubiquity-os-logger": "^1.4.0",
     "dotenv": "^16.4.5",
     "gpt-tokenizer": "^2.5.1",
