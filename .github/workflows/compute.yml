@@ -1,4 +1,4 @@
-name: "Claude 3.5 Sonnet Pull Request Reviewer"
+name: "Pull Request Reviewer"
 
 on:
   workflow_dispatch:
@@ -26,14 +26,32 @@ jobs:
     runs-on: ubuntu-latest
     permissions: write-all
     environment: ${{ github.ref == 'refs/heads/main' && 'main' || 'development' }}
-    env:
-      KERNEL_PUBLIC_KEY: ${{ secrets.KERNEL_PUBLIC_KEY }}
-      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      UBIQUITY_OS_APP_NAME: ${{ secrets.UBIQUITY_OS_APP_NAME }}
-      PLUGIN_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Run compute reviews
-        uses: ./
+      - name: Save event payload
+        run: echo '${{ github.event.inputs.eventPayload }}' > $RUNNER_TEMP/github_event.json
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@beta
+        env:
+          GITHUB_EVENT_PATH: ${{ runner.temp }}/github_event.json
+          GITHUB_EVENT_NAME: ${{ github.event.inputs.eventName }}
+          GITHUB_REPOSITORY: ${{ toJson(github.event.inputs.eventPayload).repository.full_name }}
+        with:
+          github_token: ${{ github.event.inputs.authToken }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
+          model: "claude-sonnet-4-20250514"
+
+          # Direct prompt for automated review (no @claude mention needed)
+          direct_prompt: |
+            Please review this pull request and provide feedback on:
+            - Code quality and best practices
+            - Potential bugs or issues
+            - Performance considerations
+            - Security concerns
+            - Test coverage
+
+            Be constructive and helpful in your feedback.
