@@ -38,7 +38,10 @@ jobs:
           GITHUB_EVENT_NAME: ${{ github.event.inputs.eventName }}
           GITHUB_REPOSITORY: ${{ toJson(github.event.inputs.eventPayload).repository.full_name }}
         with:
-          script: console.log(context.eventName)
+          script: |
+            console.log(process.env.GITHUB_EVENT_PATH)
+            console.log(process.env.GITHUB_EVENT_NAME)
+            console.log(context.eventName)
 
       - name: Run Claude Code Review
         id: claude-review
