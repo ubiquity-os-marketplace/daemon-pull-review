@@ -29,14 +29,14 @@ jobs:
 
     steps:
       - name: Save event payload
-        run: echo '${{ github.event.inputs.eventPayload }}' > $RUNNER_TEMP/github_event.json
+        run: echo '${{ inputs.eventPayload }}' > $RUNNER_TEMP/github_event.json
 
       - name: Output github context in JS
         uses: actions/github-script@v7
         env:
           GITHUB_EVENT_PATH: ${{ runner.temp }}/github_event.json
-          GITHUB_EVENT_NAME: ${{ github.event.inputs.eventName }}
-          GITHUB_REPOSITORY: ${{ toJson(github.event.inputs.eventPayload).repository.full_name }}
+          GITHUB_EVENT_NAME: ${{ inputs.eventName }}
+          GITHUB_REPOSITORY: ${{ toJson(inputs.eventPayload).repository.full_name }}
         with:
           script: |
             console.log(process.env.GITHUB_EVENT_PATH)
