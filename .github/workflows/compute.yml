@@ -33,7 +33,7 @@ jobs:
         with:
           token: ${{ inputs.authToken }}
           repository: ${{ fromJson(inputs.eventPayload).pull_request.base.repo.full_name }}
-          ref: ${{ 'pull/' || fromJson(inputs.eventPayload).pull_request.number || '/merge' }}
+          ref: pull/${{ fromJson(inputs.eventPayload).pull_request.number }}/merge
           persist-credentials: false
 
       - name: Run Claude Code Review
