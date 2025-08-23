@@ -30,7 +30,7 @@
   "dependencies": {
     "@octokit/graphql-schema": "^15.25.0",
     "@sinclair/typebox": "0.34.38",
-    "@ubiquity-os/plugin-sdk": "^3.1.11",
+    "@ubiquity-os/plugin-sdk": "^3.2.1",
     "@ubiquity-os/ubiquity-os-logger": "^1.4.0",
     "dotenv": "^16.4.5",
     "gpt-tokenizer": "^2.5.1",
