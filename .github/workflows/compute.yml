@@ -47,7 +47,7 @@ jobs:
           mode: "experimental-review"
           github_token: ${{ inputs.authToken }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-
+          allowed_bots: "*"
           # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
           model: "claude-sonnet-4-20250514"
 
