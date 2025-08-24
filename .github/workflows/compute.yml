@@ -61,5 +61,5 @@ jobs:
             - Security concerns
             - Test coverage
 
-            Check if the PR implements the requirements from each linked issue.
+            Check if the PR implements the requirements from each linked issue. You can also check issue's comments for additional context.
             Be constructive and helpful in your feedback.
