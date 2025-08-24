@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { drop } from "@mswjs/data";
 import { customOctokit } from "@ubiquity-os/plugin-sdk/octokit";
-import { Logs } from "@ubiquity-os/ubiquity-os-logger";
+import { LogReturn, Logs } from "@ubiquity-os/ubiquity-os-logger";
 import ms from "ms";
 import OpenAI from "openai";
 import { OpenRouterCompletion } from "../src/adapters/open-router/helpers/completions";
@@ -329,5 +329,8 @@ function createContext() {
     },
     octokit: new customOctokit(),
     eventName: "pull_request.ready_for_review" as SupportedEvents,
+    commentHandler: {
+      createCommentBody: jest.fn((ctx, log: LogReturn) => log.logMessage.raw),
+    },
   } as unknown as Context;
 }

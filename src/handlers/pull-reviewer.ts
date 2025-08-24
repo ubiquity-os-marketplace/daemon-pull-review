@@ -116,7 +116,7 @@ export class PullReviewer {
    * @param status - The review status (APPROVE, REQUEST_CHANGES, COMMENT)
    */
   async submitCodeReview(review: string | undefined, status: CodeReviewStatus): Promise<void> {
-    const { logger, payload } = this.context;
+    const { logger, payload, commentHandler } = this.context;
     const { number, repository, action, sender } = payload;
     const { owner, name } = repository;
 
@@ -127,7 +127,7 @@ export class PullReviewer {
         owner: owner.login,
         repo: name,
         pull_number: number,
-        body: review,
+        body: commentHandler.createCommentBody(this.context, logger.ok(`${review}`), { raw: true }),
         event: status,
       });
       logger.info(`Code review submitted: ${response.data.html_url}`);
