@@ -45,7 +45,7 @@ jobs:
           CUSTOM_EVENT_NAME: ${{ inputs.eventName }}
         with:
           mode: "tag"
-          allowed_tools: "Bash(gh issue view *)"
+          allowed_tools: "Bash(gh issue view:*),Bash(gh pr view:*)"
           github_token: ${{ inputs.authToken }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
