@@ -26,7 +26,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions: write-all
     environment: ${{ github.ref == 'refs/heads/main' && 'main' || 'development' }}
-    if: ${{ startsWith(inputs.eventName, 'pull_request') }}
 
     steps:
       - uses: actions/checkout@v5
