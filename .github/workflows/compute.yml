@@ -37,7 +37,7 @@ jobs:
 
       - name: Run Claude Code Review
         id: claude-review
-        uses: ubiquity-whilefoo/claude-code-action@custom-event
+        uses: ubiquity-os/claude-code-action@main
         env:
           CUSTOM_EVENT_PAYLOAD: ${{ inputs.eventPayload }}
           CUSTOM_EVENT_NAME: ${{ inputs.eventName }}
