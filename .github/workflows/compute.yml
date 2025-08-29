@@ -28,10 +28,17 @@ jobs:
     environment: ${{ github.ref == 'refs/heads/main' && 'main' || 'development' }}
 
     steps:
+      - name: Decompress event payload
+        uses: ubiquity-os/compress-action@main
+        id: eventPayload
+        with:
+          data: ${{ inputs.eventPayload }}
+          mode: decompress
+
       - uses: actions/checkout@v5
         with:
           token: ${{ inputs.authToken }}
-          repository: ${{ fromJson(inputs.eventPayload).pull_request.base.repo.full_name }}
+          repository: ${{ fromJson(steps.eventPayload.outputs.result).pull_request.base.repo.full_name }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -39,7 +46,7 @@ jobs:
         id: claude-review
         uses: ubiquity-os/claude-code-action@main
         env:
-          CUSTOM_EVENT_PAYLOAD: ${{ inputs.eventPayload }}
+          CUSTOM_EVENT_PAYLOAD: ${{ steps.eventPayload.outputs.result }}
           CUSTOM_EVENT_NAME: ${{ inputs.eventName }}
         with:
           mode: "tag"
