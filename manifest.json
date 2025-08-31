@@ -6,30 +6,6 @@
   "configuration": {
     "default": {},
     "type": "object",
-    "properties": {
-      "openRouterAiModel": {
-        "default": "anthropic/claude-3.5-sonnet",
-        "description": "The model to use for OpenRouter AI",
-        "examples": ["anthropic/claude-3.5-sonnet"],
-        "type": "string"
-      },
-      "openRouterBaseUrl": {
-        "default": "https://openrouter.ai/api/v1",
-        "description": "The base URL for OpenRouter AI",
-        "examples": ["https://openrouter.ai/api/v1"],
-        "type": "string"
-      },
-      "maxRetryAttempts": {
-        "default": 5,
-        "description": "The number of times to retry AI prompts",
-        "type": "number"
-      },
-      "reviewInterval": {
-        "default": "1 Day",
-        "description": "How often a review can be performed. Omit for no limit",
-        "examples": ["1 Day", "1 Hour", "1 Week"],
-        "type": "string"
-      }
-    }
+    "properties": {}
   }
 }

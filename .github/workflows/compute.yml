@@ -1,4 +1,4 @@
-name: "Claude 3.5 Sonnet Pull Request Reviewer"
+name: "Pull Request Reviewer"
 
 on:
   workflow_dispatch:
@@ -26,14 +26,45 @@ jobs:
     runs-on: ubuntu-latest
     permissions: write-all
     environment: ${{ github.ref == 'refs/heads/main' && 'main' || 'development' }}
-    env:
-      KERNEL_PUBLIC_KEY: ${{ secrets.KERNEL_PUBLIC_KEY }}
-      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      UBIQUITY_OS_APP_NAME: ${{ secrets.UBIQUITY_OS_APP_NAME }}
-      PLUGIN_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Run compute reviews
-        uses: ./
+      - name: Decompress event payload
+        uses: ubiquity-os/compress-action@main
+        id: eventPayload
+        with:
+          data: ${{ inputs.eventPayload }}
+          mode: decompress
+
+      - uses: actions/checkout@v5
+        with:
+          token: ${{ inputs.authToken }}
+          repository: ${{ fromJson(steps.eventPayload.outputs.result).pull_request.base.repo.full_name }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: ubiquity-os/claude-code-action@main
+        env:
+          CUSTOM_EVENT_PAYLOAD: ${{ steps.eventPayload.outputs.result }}
+          CUSTOM_EVENT_NAME: ${{ inputs.eventName }}
+        with:
+          mode: "tag"
+          allowed_tools: "Bash(gh issue view:*),Bash(gh pr view:*)"
+          github_token: ${{ inputs.authToken }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
+          model: "claude-opus-4-20250514"
+          additional_permissions: |
+            actions: read
+          # Direct prompt for automated review (no @claude mention needed)
+          direct_prompt: |
+            Please review this pull request and provide feedback on:
+            - Code quality and best practices
+            - Potential bugs or issues
+            - Performance considerations
+            - Security concerns
+            - Test coverage
+
+            Check if the PR implements the requirements from each linked issue. You can also check issue's comments for additional context.
+            Be constructive and helpful in your feedback.
