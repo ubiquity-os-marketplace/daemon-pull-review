@@ -58,6 +58,7 @@ jobs:
           GITHUB_MCP_TOKEN: ${{ inputs.authToken }}
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          allow-bots: true
           prompt: |
             This is PR #${{ fromJson(steps.eventPayload.outputs.result).pull_request.number }} for ${{ fromJson(steps.eventPayload.outputs.result).pull_request.base.repo.full_name }}.
 
