@@ -73,6 +73,7 @@ jobs:
             Be concise and specific in your feedback.
             Check if the PR implements the requirements from each linked issue. You can also check issue's comments for additional context.
             Use Github MCP tools to get more context about the repository, issues, and PRs if needed.
+            Use Git CLI to analyze the changes introduced by the PR.
 
             Pull request title and body:
             ----
