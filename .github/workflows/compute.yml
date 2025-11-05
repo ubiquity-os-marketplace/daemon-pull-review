@@ -39,32 +39,44 @@ jobs:
         with:
           token: ${{ inputs.authToken }}
           repository: ${{ fromJson(steps.eventPayload.outputs.result).pull_request.base.repo.full_name }}
+          ref: refs/pull/${{ fromJson(steps.eventPayload.outputs.result).pull_request.number }}/merge
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Run Claude Code Review
-        id: claude-review
-        uses: ubiquity-os/claude-code-action@main
+      - name: Make Codex config and setup Github MCP tools
+        run: |
+          mkdir -p ~/.codex
+          echo "[mcp_servers.github]" >> ~/.codex/config.yml
+          echo "url = \"https://api.githubcopilot.com/mcp\"" >> ~/.codex/config.yml
+          echo "bearer_token_env_var = \"GITHUB_MCP_TOKEN\"" >> ~/.codex/config.yml
+          echo "http_headers = { \"X-MCP-Toolsets\" = \"repos,issues,pull_requests,users\", \"X-MCP-Readonly\" = \"true\" }" >> ~/.codex/config.yml
+
+      - name: Run Codex
+        id: run_codex
+        uses: openai/codex-action@v1
         env:
-          CUSTOM_EVENT_PAYLOAD: ${{ steps.eventPayload.outputs.result }}
-          CUSTOM_EVENT_NAME: ${{ inputs.eventName }}
+          GITHUB_MCP_TOKEN: ${{ inputs.authToken }}
         with:
-          mode: "tag"
-          allowed_tools: "Bash(gh issue view:*),Bash(gh pr view:*)"
-          github_token: ${{ inputs.authToken }}
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
-          model: "claude-opus-4-20250514"
-          additional_permissions: |
-            actions: read
-          # Direct prompt for automated review (no @claude mention needed)
-          direct_prompt: |
-            Please review this pull request and provide feedback on:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt: |
+            This is PR #${{ fromJson(steps.eventPayload.outputs.result).pull_request.number }} for ${{ fromJson(steps.eventPayload.outputs.result).pull_request.base.repo.full_name }}.
+
+            Review ONLY the changes introduced by the PR, so consider:
             - Code quality and best practices
             - Potential bugs or issues
             - Performance considerations
             - Security concerns
             - Test coverage
 
+            Suggest any improvements, potential bugs, or issues.
+            Be concise and specific in your feedback.
             Check if the PR implements the requirements from each linked issue. You can also check issue's comments for additional context.
-            Be constructive and helpful in your feedback.
+            Use Github MCP tools to get more context about the repository, issues, and PRs if needed.
+
+            Pull request title and body:
+            ----
+            ${{ fromJson(steps.eventPayload.outputs.result).pull_request.title }}
+            ${{ fromJson(steps.eventPayload.outputs.result).pull_request.body }}
+
+      - name: Echo Codex Output
+        run: echo "${{ steps.run_codex.outputs.final-message }}"
