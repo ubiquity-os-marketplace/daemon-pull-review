@@ -47,6 +47,7 @@ jobs:
         run: |
           mkdir -p ~/.codex
           cat <<EOF > ~/.codex/config.toml
+          approval_policy = "never"
           [mcp_servers.github]
           url = "https://api.githubcopilot.com/mcp"
           bearer_token_env_var = "GITHUB_MCP_TOKEN"
@@ -60,6 +61,10 @@ jobs:
           GITHUB_MCP_TOKEN: ${{ inputs.authToken }}
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          model: ${{ vars.CODEX_MODEL_NAME || '' }}
+          effort: ${{ vars.CODEX_EFFORT || '' }}
+          sandbox: "workspace-write"
+          safety-strategy: "drop-sudo"
           allow-bots: true
           prompt: |
             This is PR #${{ fromJson(steps.eventPayload.outputs.result).pull_request.number }} for ${{ fromJson(steps.eventPayload.outputs.result).pull_request.base.repo.full_name }}.
