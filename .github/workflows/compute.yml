@@ -43,13 +43,15 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Make Codex config and setup Github MCP tools
+      - name: Create Codex config and setup MCP tools
         run: |
           mkdir -p ~/.codex
-          echo "[mcp_servers.github]" >> ~/.codex/config.toml
-          echo "url = \"https://api.githubcopilot.com/mcp\"" >> ~/.codex/config.toml
-          echo "bearer_token_env_var = \"GITHUB_MCP_TOKEN\"" >> ~/.codex/config.toml
-          echo "http_headers = { \"X-MCP-Toolsets\" = \"repos,issues,pull_requests,users\", \"X-MCP-Readonly\" = \"true\" }" >> ~/.codex/config.toml
+          cat <<EOF > ~/.codex/config.toml
+          [mcp_servers.github]
+          url = "https://api.githubcopilot.com/mcp"
+          bearer_token_env_var = "GITHUB_MCP_TOKEN"
+          http_headers = { "X-MCP-Toolsets" = "repos,issues,pull_requests,users", "X-MCP-Readonly" = "true" }
+          EOF
 
       - name: Run Codex
         id: run_codex
