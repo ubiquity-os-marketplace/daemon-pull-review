@@ -44,8 +44,11 @@ jobs:
           persist-credentials: false
 
       - name: Create Codex config and setup MCP tools
+        env:
+          CODEX_AUTH_CONFIG: ${{ secrets.CODEX_AUTH_CONFIG }}
         run: |
           mkdir -p ~/.codex
+          echo "$CODEX_AUTH_CONFIG" > ~/.codex/auth.json
           cat <<EOF > ~/.codex/config.toml
           approval_policy = "never"
           [mcp_servers.github]
@@ -60,7 +63,6 @@ jobs:
         env:
           GITHUB_MCP_TOKEN: ${{ inputs.authToken }}
         with:
-          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           model: ${{ vars.CODEX_MODEL_NAME || '' }}
           effort: ${{ vars.CODEX_EFFORT || '' }}
           sandbox: "workspace-write"
