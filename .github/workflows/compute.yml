@@ -57,9 +57,30 @@ jobs:
           http_headers = { "X-MCP-Toolsets" = "repos,issues,pull_requests,users", "X-MCP-Readonly" = "true" }
           EOF
 
+      - name: Post Thinking comment
+        uses: actions/github-script@v8
+        id: post_thinking
+        env:
+          GITHUB_TOKEN: ${{ inputs.authToken }}
+          OWNER: ${{ fromJson(steps.eventPayload.outputs.result).pull_request.base.repo.owner.login }}
+          REPO: ${{ fromJson(steps.eventPayload.outputs.result).pull_request.base.repo.name }}
+          PR_NUMBER: ${{ fromJson(steps.eventPayload.outputs.result).pull_request.number }}
+        with:
+          github-token: ${{ inputs.authToken }}
+          script: |
+            const response = await github.rest.issues.createComment({
+              owner: process.env.OWNER,
+              repo: process.env.REPO,
+              issue_number: parseInt(process.env.PR_NUMBER),
+              body: `UbiquityOS is working… <img src="https://github.com/user-attachments/assets/5ac382c7-e004-429b-8e35-7feb3e8f9c6f" width="14px" height="14px" style="vertical-align: middle; margin-left: 4px;" />
+
+            I'll analyze this and get back to you.`,
+            });
+            return response.data.id;
+
       - name: Run Codex
         id: run_codex
-        uses: openai/codex-action@v1
+        uses: ubiquity-whilefoo/codex-action@chatgpt-auth
         env:
           GITHUB_MCP_TOKEN: ${{ inputs.authToken }}
         with:
@@ -89,5 +110,20 @@ jobs:
             ${{ fromJson(steps.eventPayload.outputs.result).pull_request.title }}
             ${{ fromJson(steps.eventPayload.outputs.result).pull_request.body }}
 
-      - name: Echo Codex Output
-        run: echo "${{ steps.run_codex.outputs.final-message }}"
+      - name: Post comment
+        uses: actions/github-script@v8
+        env:
+          GITHUB_TOKEN: ${{ inputs.authToken }}
+          CODEX_OUTPUT: ${{ steps.run_codex.outputs.final-message }}
+          OWNER: ${{ fromJson(steps.eventPayload.outputs.result).pull_request.base.repo.owner.login }}
+          REPO: ${{ fromJson(steps.eventPayload.outputs.result).pull_request.base.repo.name }}
+          GITHUB_COMMENT_ID: ${{ steps.post_thinking.outputs.result }}
+        with:
+          github-token: ${{ inputs.authToken }}
+          script: |
+            await github.rest.issues.updateComment({
+              owner: process.env.OWNER,
+              repo: process.env.REPO,
+              comment_id: parseInt(process.env.GITHUB_COMMENT_ID),
+              body: process.env.CODEX_OUTPUT,
+            });
