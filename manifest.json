@@ -3,6 +3,7 @@
   "description": "A highly context aware pull reviewer",
   "ubiquity:listeners": ["pull_request.opened", "pull_request.ready_for_review", "pull_request.edited", "pull_request.reopened"],
   "skipBotEvents": true,
+  "workflowId": "action.yml",
   "configuration": {
     "default": {},
     "type": "object",
