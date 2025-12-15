@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           persist-credentials: false
-          path: daemon-pull-review
+          path: daemon
 
       - name: Checkout target repository
         uses: actions/checkout@v5
@@ -54,12 +54,12 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        working-directory: daemon-pull-review
+        working-directory: daemon
         run: bun install
 
       - name: Prepare prompt
         id: prepare_prompt
-        working-directory: daemon-pull-review
+        working-directory: daemon
         env:
           GITHUB_TOKEN: ${{ inputs.authToken }}
           EVENT_PAYLOAD: ${{ steps.eventPayload.outputs.result }}
