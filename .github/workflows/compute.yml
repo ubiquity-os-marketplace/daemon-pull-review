@@ -35,7 +35,14 @@ jobs:
           data: ${{ inputs.eventPayload }}
           mode: decompress
 
-      - uses: actions/checkout@v5
+      - name: Checkout daemon-pull-review
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          path: daemon-pull-review
+
+      - name: Checkout target repository
+        uses: actions/checkout@v5
         with:
           token: ${{ inputs.authToken }}
           repository: ${{ fromJson(steps.eventPayload.outputs.result).pull_request.base.repo.full_name }}
@@ -43,9 +50,26 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        working-directory: daemon-pull-review
+        run: bun install
+
+      - name: Prepare prompt
+        id: prepare_prompt
+        working-directory: daemon-pull-review
+        env:
+          GITHUB_TOKEN: ${{ inputs.authToken }}
+          EVENT_PAYLOAD: ${{ steps.eventPayload.outputs.result }}
+        run: |
+          bun run scripts/prompt.ts
+
       - name: Run Codex
         id: run_codex
         uses: ubiquity-os/codex-action@chatgpt-auth
+        if: steps.prepare_prompt.outputs.should_skip != 'true'
         env:
           GITHUB_MCP_TOKEN: ${{ inputs.authToken }}
         with:
@@ -63,23 +87,4 @@ jobs:
           sandbox: "workspace-write"
           safety-strategy: "drop-sudo"
           allow-bots: true
-          prompt: |
-            This is PR #${{ fromJson(steps.eventPayload.outputs.result).pull_request.number }} for ${{ fromJson(steps.eventPayload.outputs.result).pull_request.base.repo.full_name }}.
-
-            Review ONLY the changes introduced by the PR, so consider:
-            - Code quality and best practices
-            - Potential bugs or issues
-            - Performance considerations
-            - Security concerns
-            - Test coverage
-
-            Suggest any improvements, potential bugs, or issues.
-            Be concise and specific in your feedback.
-            Check if the PR implements the requirements from each linked issue. You can also check issue's comments for additional context.
-            Use Github MCP tools to get more context about the repository, issues, and PRs if needed.
-            Use Git CLI to analyze the changes introduced by the PR.
-
-            Pull request title and body:
-            ----
-            ${{ fromJson(steps.eventPayload.outputs.result).pull_request.title }}
-            ${{ fromJson(steps.eventPayload.outputs.result).pull_request.body }}
+          prompt: ${{ steps.prepare_prompt.outputs.prompt }}
