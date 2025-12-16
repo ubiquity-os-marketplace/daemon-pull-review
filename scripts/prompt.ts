@@ -41,7 +41,7 @@ async function main() {
     .map((review) => {
       const sha = review?.commit_id ?? "unknown-sha";
       const timestamp = review.submitted_at ?? "unknown-time";
-      return `- ${timestamp} (${review.state}) @ ${sha}\n${review.body ?? "(no body)"}`;
+      return `----- ${timestamp} (${review.state}) @ ${sha} -----\n${review.body ?? "(no body)"}\n-----`;
     })
     .join("\n\n");
 
