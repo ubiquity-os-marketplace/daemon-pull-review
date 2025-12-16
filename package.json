@@ -1,0 +1,12 @@
+{
+  "name": "@ubiquity-os/daemon-pull-review",
+  "version": "1.0.0",
+  "description": "Makes pull reviews",
+  "author": "Ubiquity DAO",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^2.0.1",
+    "@octokit/rest": "^22.0.1",
+    "@octokit/webhooks-types": "^7.6.1"
+  }
+}
