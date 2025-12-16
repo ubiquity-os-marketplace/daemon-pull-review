@@ -19,10 +19,13 @@ async function main() {
     pull_number: prNumber,
     body: codexResponse,
     commit_id: event.pull_request.head.sha,
+    event: "COMMENT",
   });
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+main()
+  .then(() => console.log("Review posted successfully"))
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
