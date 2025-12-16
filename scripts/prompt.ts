@@ -51,6 +51,10 @@ This is PR #${prNumber} for ${owner}/${repo}.
 IMPORTANT: Perform an INCREMENTAL review only.
 - You MUST review ONLY changes introduced since the last review. If there was no prior review, review all changes in the PR.
 - Compute and analyze the diff range: ${baseSha}..${headSha}
+- Be concise and specific in your feedback.
+- Suggest any improvements, potential bugs, or issues.
+- Check if the PR implements the requirements from each linked issue. You can also check issue's comments for additional context.
+- Use Github MCP tools to get more context about the repository, issues, and PRs if needed.
 - Use Git CLI to inspect ONLY this range (e.g. \`git diff ${baseSha}..${headSha}\`, \`git log --oneline ${baseSha}..${headSha}\`).
 - Do NOT re-review code that was already covered in earlier reviews, unless a new change affects it.
 
