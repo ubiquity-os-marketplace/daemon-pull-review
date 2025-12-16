@@ -1,17 +1,7 @@
 import { Octokit } from "@octokit/rest";
 import { PullRequestSynchronizeEvent, PullRequestOpenedEvent } from "@octokit/webhooks-types";
 import { setOutput } from "@actions/core";
-
-function mustGetEnv(name: string): string {
-  const v = process.env[name];
-  if (!v) throw new Error(`Missing env: ${name}`);
-  return v;
-}
-
-function coerceJsonEnv<T = unknown>(name: string): T {
-  const raw = mustGetEnv(name);
-  return JSON.parse(raw);
-}
+import { coerceJsonEnv, mustGetEnv } from "./utils";
 
 async function main() {
   const token = mustGetEnv("GITHUB_TOKEN");

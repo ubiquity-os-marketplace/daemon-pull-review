@@ -75,6 +75,7 @@ jobs:
           GITHUB_MCP_TOKEN: ${{ inputs.authToken }}
         with:
           working-directory: target
+          post-comment: false
           codex-auth-config: ${{ secrets.CODEX_AUTH_CONFIG }}
           codex-config: |
             approval_policy = "never"
@@ -90,3 +91,13 @@ jobs:
           safety-strategy: "drop-sudo"
           allow-bots: true
           prompt: ${{ steps.prepare_prompt.outputs.prompt }}
+
+      - name: Post review
+        if: steps.run_codex.outcome == 'success' && steps.run_codex.outputs['final-message'] != ''
+        working-directory: daemon
+        env:
+          GITHUB_TOKEN: ${{ inputs.authToken }}
+          EVENT_PAYLOAD: ${{ steps.eventPayload.outputs.result }}
+          CODEX_RESPONSE: ${{ steps.run_codex.outputs['final-message'] }}
+        run: |
+          bun run scripts/postReview.ts
