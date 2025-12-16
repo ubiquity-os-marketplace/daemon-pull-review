@@ -33,7 +33,7 @@ async function main() {
     // sort ascending by submission time
     .sort((a, b) => new Date(a.submitted_at ?? 0).getTime() - new Date(b.submitted_at ?? 0).getTime());
 
-  const lastReviewedSha = botReviews[-1]?.commit_id;
+  const lastReviewedSha = botReviews.at(-1)?.commit_id;
   const baseSha = lastReviewedSha || pr.data.base.sha;
   const headSha = pr.data.head.sha;
 
