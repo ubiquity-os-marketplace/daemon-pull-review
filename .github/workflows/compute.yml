@@ -49,7 +49,7 @@ jobs:
           ref: refs/pull/${{ fromJson(steps.eventPayload.outputs.result).pull_request.number }}/merge
           fetch-depth: 0
           persist-credentials: false
-          path: target
+          path: ${{ fromJson(steps.eventPayload.outputs.result).pull_request.base.repo.name }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -74,7 +74,7 @@ jobs:
         env:
           GITHUB_MCP_TOKEN: ${{ inputs.authToken }}
         with:
-          working-directory: target
+          working-directory: ${{ fromJson(steps.eventPayload.outputs.result).pull_request.base.repo.name }}
           post-comment: false
           codex-auth-config: ${{ secrets.CODEX_AUTH_CONFIG }}
           codex-config: |
